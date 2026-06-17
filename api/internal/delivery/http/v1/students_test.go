@@ -408,7 +408,7 @@ func TestHandler_studentSetLessonFinished(t *testing.T) {
 
 			// Init Endpoint
 			r := gin.New()
-			r.GET("/lessons/:id/finished", func(c *gin.Context) {
+			r.POST("/lessons/:id/finished", func(c *gin.Context) {
 				c.Set(schoolCtx, domain.School{
 					ID: schoolId,
 				})
@@ -417,7 +417,7 @@ func TestHandler_studentSetLessonFinished(t *testing.T) {
 
 			// Create Request
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", fmt.Sprintf("/lessons/%d/finished", tt.lessonId), nil)
+			req := httptest.NewRequest("POST", fmt.Sprintf("/lessons/%d/finished", tt.lessonId), nil)
 
 			// Make Request
 			r.ServeHTTP(w, req)
