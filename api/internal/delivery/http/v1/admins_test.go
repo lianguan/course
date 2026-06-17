@@ -136,7 +136,7 @@ func TestHandler_adminCreatePromocode(t *testing.T) {
 	}{
 		{
 			name:   "ok",
-			body:   `{"code": "TESTPROMO", "discountPercentage": 15, "expiresAt": "2022-12-10T13:49:51.0Z", "offerIds": ["1"]}`,
+			body:   `{"code": "TESTPROMO", "discountPercentage": 15, "expiresAt": "2022-12-10T13:49:51.0Z", "offerIds": [1]}`,
 			school: school,
 			input: service.CreatePromoCodeInput{
 				SchoolID:           school.ID,
@@ -161,7 +161,7 @@ func TestHandler_adminCreatePromocode(t *testing.T) {
 		},
 		{
 			name:   "service error",
-			body:   `{"code": "TESTPROMO", "discountPercentage": 15, "expiresAt": "2022-12-10T13:49:51.0Z", "offerIds": ["1"]}`,
+			body:   `{"code": "TESTPROMO", "discountPercentage": 15, "expiresAt": "2022-12-10T13:49:51.0Z", "offerIds": [1]}`,
 			school: school,
 			input: service.CreatePromoCodeInput{
 				SchoolID:           school.ID,
