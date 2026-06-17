@@ -153,15 +153,16 @@ export interface PromoCode {
 }
 
 export interface Survey {
-  id: number;
-  moduleId: number;
+  title: string;
+  required: boolean;
   questions: SurveyQuestion[];
 }
 
 export interface SurveyQuestion {
   id: number;
-  text: string;
-  required: boolean;
+  question: string;
+  answerType: string;
+  answerOptions: string[];
 }
 
 export interface SurveyResult {

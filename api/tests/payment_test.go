@@ -37,7 +37,7 @@ func (s *APITestSuite) TestFondyCallbackApproved() {
 	var offer domain.Offer
 	s.db.First(&offer, offers[0].(domain.Offer).ID)
 
-	_, err = s.db.WithContext(context.Background()).Create(&domain.Order{
+	err = s.db.WithContext(context.Background()).Create(&domain.Order{
 		SchoolID: school.ID,
 		Offer:    domain.OrderOfferInfo{ID: offer.ID, Name: offerName},
 		Student:  domain.StudentInfoShort{ID: studentId, Email: studentEmail, Name: studentName},

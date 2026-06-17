@@ -51,6 +51,11 @@ export default function AdminSurveyPage() {
   }, [token, moduleId]);
 
   const handleCreateOrUpdate = async () => {
+    if (!newQuestionText.trim()) {
+      alert("请输入问题内容");
+      return;
+    }
+    
     const questions = survey?.questions || [];
     const answerOptions = newQuestionOptions ? newQuestionOptions.split(",").map(s => s.trim()) : [];
     const newQuestions = [...questions, { 
@@ -58,16 +63,21 @@ export default function AdminSurveyPage() {
       answerType: newQuestionAnswerType,
       answerOptions 
     }];
-    await api.post(`/admins/modules/${moduleId}/survey`, { 
-      title: surveyTitle || "问卷",
-      required: true,
-      questions: newQuestions 
-    });
-    setNewQuestionText("");
-    setNewQuestionOptions("");
-    setDialogOpen(false);
-    const updated = await api.get<Survey>(`/admins/modules/${moduleId}/survey`);
-    setSurvey(updated);
+    
+    try {
+      await api.post(`/admins/modules/${moduleId}/survey`, { 
+        title: surveyTitle || "问卷",
+        required: true,
+        questions: newQuestions 
+      });
+      setNewQuestionText("");
+      setNewQuestionOptions("");
+      setDialogOpen(false);
+      const updated = await api.get<Survey>(`/admins/modules/${moduleId}/survey`);
+      setSurvey(updated);
+    } catch (error) {
+      alert("添加问题失败: " + (error as Error).message);
+    }
   };
 
   const handleDeleteSurvey = async () => {
@@ -110,8 +120,8 @@ export default function AdminSurveyPage() {
                   <div key={q.id} className="flex items-center justify-between p-3 border rounded-md">
                     <div>
                       <span className="text-sm text-muted-foreground mr-2">{i + 1}.</span>
-                      <span>{q.text}</span>
-                      {q.required && <span className="ml-2 text-xs text-red-500">*必填</span>}
+                      <span>{q.question}</span>
+                      {q.answerType && <span className="ml-2 text-xs text-blue-500">({q.answerType})</span>}
                     </div>
                   </div>
                 ))}

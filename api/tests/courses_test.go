@@ -80,7 +80,7 @@ func (s *APITestSuite) TestGetCourseById() {
 	s.handler.Init(router.Group("/api"))
 	r = s.Require()
 
-	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%s", school.Courses[1].ID.Hex()), nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%d", school.Courses[1].ID), nil)
 	req.Header.Set("Content-type", "application/json")
 
 	resp = httptest.NewRecorder()
