@@ -3,7 +3,17 @@
 .DEFAULT_GOAL := run
 
 build:
-	go mod download && CGO_ENABLED=0 GOOS=linux go build -o ./app ./main.go
+	@echo "========================================="
+	@echo " UltraThreads API - Building..."
+	@echo "========================================="
+	@echo "[1/3] Downloading dependencies..."
+	go mod download
+	@echo "[2/3] Building binary (linux/amd64)..."
+	CGO_ENABLED=0 GOOS=linux go build -o ./app ./main.go
+	@echo "[3/3] Build complete!"
+	@echo " Output: ./app"
+	@ls -lh ./app 2>/dev/null || dir /b .\app 2>nul
+	@echo "========================================="
 
 run: build
 	docker-compose up --remove-orphans app
