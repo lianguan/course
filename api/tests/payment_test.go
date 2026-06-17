@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/gin-gonic/gin"
 	"ultrathreads/internal/domain"
 	"ultrathreads/pkg/email"
 	"ultrathreads/pkg/payment/fondy"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (s *APITestSuite) TestFondyCallbackApproved() {
@@ -103,7 +104,7 @@ func (s *APITestSuite) TestFondyCallbackDeclined() {
 	var offer domain.Offer
 	s.db.First(&offer, offers[0].(domain.Offer).ID)
 
-	_, err = s.db.WithContext(context.Background()).Create(&domain.Order{
+	err = s.db.WithContext(context.Background()).Create(&domain.Order{
 		SchoolID: school.ID,
 		Offer:    domain.OrderOfferInfo{ID: offer.ID},
 		Student:  domain.StudentInfoShort{ID: studentId},

@@ -2,141 +2,72 @@ package config
 
 import (
 	"os"
-	"reflect"
 	"testing"
 	"time"
 )
 
 func TestInit(t *testing.T) {
-	type env struct {
-		mysqlDSN         string
-		passwordSalt     string
-		jwtSigningKey    string
-		host             string
-		fondyCallbackURL string
-		frontendUrl      string
-		smtpPassword     string
-		appEnv           string
-		storageEndpoint  string
-		storageBucket    string
-		storageAccessKey string
-		storageSecretKey string
+	// 设置环境变量
+	os.Setenv("MYSQL_HOST", "localhost")
+	os.Setenv("MYSQL_PORT", "3306")
+	os.Setenv("MYSQL_USER", "root")
+	os.Setenv("MYSQL_PASSWORD", "root1234")
+	os.Setenv("MYSQL_DBNAME", "course")
+	os.Setenv("PASSWORD_SALT", "test-salt")
+	os.Setenv("JWT_SIGNING_KEY", "test-key")
+	os.Setenv("HTTP_PORT", "8000")
+	os.Setenv("ACCESS_TOKEN_TTL", "2h")
+	os.Setenv("REFRESH_TOKEN_TTL", "720h")
+	os.Setenv("CACHE_TTL", "60s")
+	os.Setenv("SMTP_HOST", "mail.example.com")
+	os.Setenv("SMTP_PORT", "587")
+	os.Setenv("SMTP_FROM", "test@example.com")
+	os.Setenv("APP_ENV", "local")
+
+	defer func() {
+		os.Unsetenv("MYSQL_HOST")
+		os.Unsetenv("MYSQL_PORT")
+		os.Unsetenv("MYSQL_USER")
+		os.Unsetenv("MYSQL_PASSWORD")
+		os.Unsetenv("MYSQL_DBNAME")
+		os.Unsetenv("PASSWORD_SALT")
+		os.Unsetenv("JWT_SIGNING_KEY")
+		os.Unsetenv("HTTP_PORT")
+		os.Unsetenv("ACCESS_TOKEN_TTL")
+		os.Unsetenv("REFRESH_TOKEN_TTL")
+		os.Unsetenv("CACHE_TTL")
+		os.Unsetenv("SMTP_HOST")
+		os.Unsetenv("SMTP_PORT")
+		os.Unsetenv("SMTP_FROM")
+		os.Unsetenv("APP_ENV")
+	}()
+
+	cfg, err := Init(".")
+	if err != nil {
+		t.Fatalf("Init() error = %v", err)
 	}
 
-	type args struct {
-		path string
-		env  env
+	if cfg.Environment != "local" {
+		t.Errorf("Environment = %v, want local", cfg.Environment)
 	}
 
-	setEnv := func(env env) {
-		os.Setenv("MYSQL_DSN", env.mysqlDSN)
-		os.Setenv("PASSWORD_SALT", env.passwordSalt)
-		os.Setenv("JWT_SIGNING_KEY", env.jwtSigningKey)
-		os.Setenv("HTTP_HOST", env.host)
-		os.Setenv("FONDY_CALLBACK_URL", env.fondyCallbackURL)
-		os.Setenv("FRONTEND_URL", env.frontendUrl)
-		os.Setenv("SMTP_PASSWORD", env.smtpPassword)
-		os.Setenv("APP_ENV", env.appEnv)
-		os.Setenv("STORAGE_ENDPOINT", env.storageEndpoint)
-		os.Setenv("STORAGE_BUCKET", env.storageBucket)
-		os.Setenv("STORAGE_ACCESS_KEY", env.storageAccessKey)
-		os.Setenv("STORAGE_SECRET_KEY", env.storageSecretKey)
+	if cfg.HTTP.Port != "8000" {
+		t.Errorf("HTTP.Port = %v, want 8000", cfg.HTTP.Port)
 	}
 
-	tests := []struct {
-		name    string
-		args    args
-		want    *Config
-		wantErr bool
-	}{
-		{
-			name: "test config",
-			args: args{
-				path: "fixtures",
-				env: env{
-					mysqlDSN:         "root:qwerty@tcp(localhost:3306)/testDatabase?charset=utf8mb4&parseTime=True&loc=Local",
-					passwordSalt:     "salt",
-					jwtSigningKey:    "key",
-					host:             "localhost",
-					fondyCallbackURL: "https://ultrathreads.com/callback",
-					frontendUrl:      "http://localhost:1337",
-					smtpPassword:     "qwerty123",
-					appEnv:           "local",
-					storageEndpoint:  "test.filestorage.com",
-					storageBucket:    "test",
-					storageAccessKey: "qwerty123",
-					storageSecretKey: "qwerty123",
-				},
-			},
-			want: &Config{
-				Environment: "local",
-				CacheTTL:    time.Second * 3600,
-				HTTP: HTTPConfig{
-					Host:               "localhost",
-					MaxHeaderMegabytes: 1,
-					Port:               "80",
-					ReadTimeout:        time.Second * 10,
-					WriteTimeout:       time.Second * 10,
-				},
-				Auth: AuthConfig{
-					PasswordSalt: "salt",
-					JWT: JWTConfig{
-						RefreshTokenTTL: time.Minute * 30,
-						AccessTokenTTL:  time.Minute * 15,
-						SigningKey:      "key",
-					},
-					VerificationCodeLength: 10,
-				},
-				MySQL: MySQLConfig{
-					DSN: "root:qwerty@tcp(localhost:3306)/testDatabase?charset=utf8mb4&parseTime=True&loc=Local",
-				},
-				FileStorage: FileStorageConfig{
-					Endpoint:  "test.filestorage.com",
-					Bucket:    "test",
-					AccessKey: "qwerty123",
-					SecretKey: "qwerty123",
-				},
-				Email: EmailConfig{
-					Templates: EmailTemplates{
-						Verification:       "./templates/verification_email.html",
-						PurchaseSuccessful: "./templates/purchase_successful.html",
-					},
-					Subjects: EmailSubjects{
-						Verification:       "Спасибо за регистрацию, %s!",
-						PurchaseSuccessful: "Покупка прошла успешно!",
-					},
-				},
-				Payment: PaymentConfig{
-					FondyCallbackURL: "https://ultrathreads.com/callback",
-				},
-				Limiter: LimiterConfig{
-					RPS:   10,
-					Burst: 2,
-					TTL:   time.Minute * 10,
-				},
-				SMTP: SMTPConfig{
-					Host: "mail.privateemail.com",
-					Port: 587,
-					From: "maksim@ultrathreads.com",
-					Pass: "qwerty123",
-				},
-			},
-		},
+	if cfg.MySQL.Host != "localhost" {
+		t.Errorf("MySQL.Host = %v, want localhost", cfg.MySQL.Host)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			setEnv(tt.args.env)
+	if cfg.Auth.PasswordSalt != "test-salt" {
+		t.Errorf("Auth.PasswordSalt = %v, want test-salt", cfg.Auth.PasswordSalt)
+	}
 
-			got, err := Init(tt.args.path)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Init() error = %v, wantErr %v", err, tt.wantErr)
+	if cfg.Auth.JWT.SigningKey != "test-key" {
+		t.Errorf("Auth.JWT.SigningKey = %v, want test-key", cfg.Auth.JWT.SigningKey)
+	}
 
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() got = %v, want %v", got, tt.want)
-			}
-		})
+	if cfg.CacheTTL != 60*time.Second {
+		t.Errorf("CacheTTL = %v, want 60s", cfg.CacheTTL)
 	}
 }

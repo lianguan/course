@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/gin-gonic/gin"
 	"ultrathreads/internal/domain"
+
+	"github.com/gin-gonic/gin"
 )
 
 type courseResponse struct {
@@ -66,7 +67,7 @@ func (s *APITestSuite) TestGetCourseById() {
 	s.handler.Init(router.Group("/api"))
 	r := s.Require()
 
-	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%s", school.Courses[0].ID.Hex()), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%d", school.Courses[0].ID), nil)
 	req.Header.Set("Content-type", "application/json")
 
 	resp := httptest.NewRecorder()
@@ -93,7 +94,7 @@ func (s *APITestSuite) TestGetCourseOffers() {
 	s.handler.Init(router.Group("/api"))
 	r := s.Require()
 
-	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%s/offers", school.Courses[0].ID.Hex()), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%d/offers", school.Courses[0].ID), nil)
 	req.Header.Set("Content-type", "application/json")
 
 	resp := httptest.NewRecorder()
