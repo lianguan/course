@@ -47,5 +47,9 @@ func parseIdFromPath(c *gin.Context, param string) (uint, error) {
 		return 0, errors.New("invalid id param")
 	}
 
+	if id == 0 {
+		return 0, errors.New("invalid id param")
+	}
+
 	return uint(id), nil
 }

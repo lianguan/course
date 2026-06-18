@@ -261,7 +261,7 @@ func TestHandler_studentGetModuleContent(t *testing.T) {
 				r.EXPECT().GetModuleContent(context.Background(), schoolId, studentId, moduleId).Return(content, nil)
 			},
 			statusCode:   200,
-			responseBody: fmt.Sprintf(`{"lessons":[{"id":0,"name":"test lesson","position":0,"published":true,"content":"content","schoolId":"%d"}],"survey":{"title":"","questions":null,"required":false}}`, schoolId),
+			responseBody: fmt.Sprintf(`{"lessons":[{"id":0,"name":"test lesson","position":0,"published":true,"content":"content","schoolId":%d}],"survey":{"title":"","questions":null,"required":false}}`, schoolId),
 		},
 		{
 			name:      "invalid module id",
