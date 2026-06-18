@@ -145,7 +145,7 @@ func Run(configPath string) {
 		Environment:            cfg.Environment,
 		Domain:                 cfg.HTTP.Host,
 	})
-	handlers := delivery.NewHandler(services, tokenManager)
+	handlers := handler.NewHandler(services, tokenManager)
 
 	services.Files.InitStorageUploaderWorkers(context.Background())
 

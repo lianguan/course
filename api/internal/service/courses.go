@@ -17,10 +17,11 @@ func NewCoursesService(repo CoursesRepository, modulesService Modules) *CoursesS
 }
 
 func (s *CoursesService) Create(ctx context.Context, schoolID uint, name string) (uint, error) {
+	now := time.Now().Unix()
 	return s.repo.Create(ctx, schoolID, domain.Course{
 		Name:      name,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: now,
+		UpdatedAt: now,
 	})
 }
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 
 	"gorm.io/gorm"
 )
@@ -19,7 +20,9 @@ func NewStudentsRepo(db *gorm.DB) *StudentsRepo {
 }
 
 func (r *StudentsRepo) Create(ctx context.Context, student *domain.Student) error {
-	return r.db.WithContext(ctx).Create(student).Error
+	var model models.StudentModel
+	model.FromDomain(*student)
+	return r.db.WithContext(ctx).Create(&model).Error
 }
 
 func (r *StudentsRepo) Update(ctx context.Context, inp domain.UpdateStudentInput) error {
@@ -39,7 +42,7 @@ func (r *StudentsRepo) Update(ctx context.Context, inp domain.UpdateStudentInput
 	}
 
 	return r.db.WithContext(ctx).
-		Model(&domain.Student{}).
+		Model(&models.StudentModel{}).
 		Where("id = ? AND school_id = ?", inp.StudentID, inp.SchoolID).
 		Updates(updates).Error
 }
@@ -47,56 +50,56 @@ func (r *StudentsRepo) Update(ctx context.Context, inp domain.UpdateStudentInput
 func (r *StudentsRepo) Delete(ctx context.Context, schoolID, studentID uint) error {
 	return r.db.WithContext(ctx).
 		Where("id = ? AND school_id = ?", studentID, schoolID).
-		Delete(&domain.Student{}).Error
+		Delete(&models.StudentModel{}).Error
 }
 
 func (r *StudentsRepo) GetByCredentials(ctx context.Context, schoolID uint, email, password string) (domain.Student, error) {
-	var student domain.Student
+	var model models.StudentModel
 	err := r.db.WithContext(ctx).
 		Where("email = ? AND password = ? AND school_id = ? AND verification_verified = ?", email, password, schoolID, true).
-		First(&student).Error
+		First(&model).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.Student{}, domain.ErrUserNotFound
 		}
 		return domain.Student{}, err
 	}
-	return student, nil
+	return model.ToDomain(), nil
 }
 
 func (r *StudentsRepo) GetByRefreshToken(ctx context.Context, schoolID uint, refreshToken string) (domain.Student, error) {
-	var student domain.Student
+	var model models.StudentModel
 	err := r.db.WithContext(ctx).
 		Where("session_refresh_token = ? AND school_id = ? AND session_expires_at > ?", refreshToken, schoolID, time.Now()).
-		First(&student).Error
+		First(&model).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.Student{}, domain.ErrUserNotFound
 		}
 		return domain.Student{}, err
 	}
-	return student, nil
+	return model.ToDomain(), nil
 }
 
 func (r *StudentsRepo) GetById(ctx context.Context, schoolID, id uint) (domain.Student, error) {
-	var student domain.Student
+	var model models.StudentModel
 	err := r.db.WithContext(ctx).
 		Where("id = ? AND school_id = ?", id, schoolID).
-		First(&student).Error
+		First(&model).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.Student{}, domain.ErrUserNotFound
 		}
 		return domain.Student{}, err
 	}
-	return student, nil
+	return model.ToDomain(), nil
 }
 
 func (r *StudentsRepo) GetBySchool(ctx context.Context, schoolID uint, query domain.GetStudentsQuery) ([]domain.Student, int64, error) {
-	var students []domain.Student
+	var models []models.StudentModel
 	var count int64
 
-	db := r.db.WithContext(ctx).Model(&domain.Student{}).Where("school_id = ?", schoolID)
+	db := r.db.WithContext(ctx).Model(&models.StudentModel{}).Where("school_id = ?", schoolID)
 
 	if query.Search != "" {
 		db = db.Where("name LIKE ? OR email LIKE ?", "%"+query.Search+"%", "%"+query.Search+"%")
@@ -128,134 +131,103 @@ func (r *StudentsRepo) GetBySchool(ctx context.Context, schoolID uint, query dom
 		db = db.Offset(int(query.PaginationQuery.Skip))
 	}
 
-	err := db.Order("registered_at DESC").Find(&students).Error
-	return students, count, err
+	err := db.Order("registered_at DESC").Find(&models).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	students := make([]domain.Student, len(models))
+	for i, m := range models {
+		students[i] = m.ToDomain()
+	}
+	return students, count, nil
 }
 
 func (r *StudentsRepo) SetSession(ctx context.Context, studentID uint, session domain.Session) error {
 	return r.db.WithContext(ctx).
-		Model(&domain.Student{}).
+		Model(&models.StudentModel{}).
 		Where("id = ?", studentID).
 		Updates(map[string]interface{}{
 			"session_refresh_token": session.RefreshToken,
-			"session_expires_at":    session.ExpiresAt,
+			"session_expires_at":    time.Unix(session.ExpiresAt, 0),
 			"last_visit_at":         time.Now(),
 		}).Error
 }
 
 func (r *StudentsRepo) GiveAccessToModule(ctx context.Context, studentID, moduleID uint) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var student domain.Student
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&student, studentID).Error; err != nil {
+		var model models.StudentModel
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&model, studentID).Error; err != nil {
 			return err
 		}
 
-		// 检查是否已存在
-		for _, m := range student.AvailableModules {
-			if m == moduleID {
-				return nil
-			}
+		student := model.ToDomain()
+		if student.IsModuleAvailableByID(moduleID) {
+			return nil
 		}
 
-		modules := append(student.AvailableModules, moduleID)
-		return tx.Model(&domain.Student{}).
+		student.GrantModuleAccess(moduleID)
+		model.FromDomain(student)
+
+		return tx.Model(&models.StudentModel{}).
 			Where("id = ?", studentID).
-			Update("available_modules", modules).Error
+			Update("available_modules", model.AvailableModules).Error
 	})
 }
 
 func (r *StudentsRepo) AttachOffer(ctx context.Context, studentID, offerID uint, moduleIDs []uint) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var student domain.Student
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&student, studentID).Error; err != nil {
+		var model models.StudentModel
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&model, studentID).Error; err != nil {
 			return err
 		}
 
-		// 添加模块（去重）
-		modules := student.AvailableModules
-		for _, mid := range moduleIDs {
-			found := false
-			for _, m := range modules {
-				if m == mid {
-					found = true
-					break
-				}
-			}
-			if !found {
-				modules = append(modules, mid)
-			}
-		}
+		student := model.ToDomain()
+		student.GrantOfferAccess(offerID, moduleIDs)
+		model.FromDomain(student)
 
-		// 添加优惠（去重）
-		offers := student.AvailableOffers
-		found := false
-		for _, o := range offers {
-			if o == offerID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			offers = append(offers, offerID)
-		}
-
-		return tx.Model(&domain.Student{}).
+		return tx.Model(&models.StudentModel{}).
 			Where("id = ?", studentID).
 			Updates(map[string]interface{}{
-				"available_modules": modules,
-				"available_offers":  offers,
+				"available_modules": model.AvailableModules,
+				"available_offers":  model.AvailableOffers,
 			}).Error
 	})
 }
 
 func (r *StudentsRepo) DetachOffer(ctx context.Context, studentID, offerID uint, moduleIDs []uint) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var student domain.Student
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&student, studentID).Error; err != nil {
+		var model models.StudentModel
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&model, studentID).Error; err != nil {
 			return err
 		}
 
-		// 移除模块
-		removeSet := make(map[uint]bool)
-		for _, mid := range moduleIDs {
-			removeSet[mid] = true
-		}
-		var filtered []uint
-		for _, m := range student.AvailableModules {
-			if !removeSet[m] {
-				filtered = append(filtered, m)
-			}
-		}
+		student := model.ToDomain()
+		student.RevokeOfferAccess(offerID, moduleIDs)
+		model.FromDomain(student)
 
-		// 移除优惠
-		var filteredOffers []uint
-		for _, o := range student.AvailableOffers {
-			if o != offerID {
-				filteredOffers = append(filteredOffers, o)
-			}
-		}
-
-		return tx.Model(&domain.Student{}).
+		return tx.Model(&models.StudentModel{}).
 			Where("id = ?", studentID).
 			Updates(map[string]interface{}{
-				"available_modules": filtered,
-				"available_offers":  filteredOffers,
+				"available_modules": model.AvailableModules,
+				"available_offers":  model.AvailableOffers,
 			}).Error
 	})
 }
 
 func (r *StudentsRepo) Verify(ctx context.Context, code string) (domain.Student, error) {
-	var student domain.Student
+	var model models.StudentModel
 	err := r.db.WithContext(ctx).
 		Where("verification_code = ?", code).
-		First(&student).Error
+		First(&model).Error
 	if err != nil {
 		return domain.Student{}, err
 	}
 
-	student.Verification.Verified = true
-	student.Verification.Code = ""
-	err = r.db.WithContext(ctx).Save(&student).Error
+	student := model.ToDomain()
+	student.MarkAsVerified()
+	model.FromDomain(student)
 
-	return student, err
+	err = r.db.WithContext(ctx).Save(&model).Error
+	return model.ToDomain(), err
 }

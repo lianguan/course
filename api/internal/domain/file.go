@@ -1,9 +1,6 @@
 package domain
 
-import (
-	"io"
-	"time"
-)
+import "io"
 
 type (
 	FileStatus int
@@ -25,16 +22,17 @@ const (
 	Other FileType = "other" // 其他
 )
 
+// File 文件实体
 type File struct {
-	ID              uint       `gorm:"primaryKey;autoIncrement" json:"id"`              // 文件ID
-	SchoolID        uint       `gorm:"not null;index" json:"schoolId"`                  // 所属学校ID
-	Type            FileType   `gorm:"size:50;not null;index" json:"type"`              // 文件类型
-	ContentType     string     `gorm:"size:100" json:"contentType"`                     // MIME类型
-	Name            string     `gorm:"size:255;not null" json:"name"`                   // 文件名
-	Size            int64      `gorm:"not null" json:"size"`                            // 文件大小(字节)
-	Status          FileStatus `gorm:"not null;default:0;index" json:"status"`          // 上传状态
-	UploadStartedAt time.Time  `gorm:"not null" json:"uploadStartedAt"`                 // 上传开始时间
-	URL             string     `gorm:"size:500" json:"url"`                             // 文件访问URL
+	ID              uint       // 文件ID
+	SchoolID        uint       // 所属学校ID
+	Type            FileType   // 文件类型
+	ContentType     string     // MIME类型
+	Name            string     // 文件名
+	Size            int64      // 文件大小(字节)
+	Status          FileStatus // 上传状态
+	UploadStartedAt int64      // 上传开始时间（Unix 时间戳）
+	URL             string     // 文件访问URL
 }
 
 // UploadInput 文件上传输入（Service 层使用）

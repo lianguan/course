@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 	"gorm.io/gorm"
 )
 
@@ -17,8 +18,10 @@ func NewCoursesRepo(db *gorm.DB) *CoursesRepo {
 }
 
 func (r *CoursesRepo) Create(ctx context.Context, schoolID uint, course domain.Course) (uint, error) {
-	err := r.db.WithContext(ctx).Create(&course).Error
-	return course.ID, err
+	var model models.CourseModel
+	model.FromDomain(course)
+	err := r.db.WithContext(ctx).Create(&model).Error
+	return model.ID, err
 }
 
 func (r *CoursesRepo) Update(ctx context.Context, inp domain.UpdateCourseInput) error {
@@ -43,7 +46,7 @@ func (r *CoursesRepo) Update(ctx context.Context, inp domain.UpdateCourseInput) 
 	}
 
 	return r.db.WithContext(ctx).
-		Model(&domain.Course{}).
+		Model(&models.CourseModel{}).
 		Where("id = ?", inp.ID).
 		Updates(updates).Error
 }
@@ -51,5 +54,5 @@ func (r *CoursesRepo) Update(ctx context.Context, inp domain.UpdateCourseInput) 
 func (r *CoursesRepo) Delete(ctx context.Context, schoolID, courseID uint) error {
 	return r.db.WithContext(ctx).
 		Where("id = ?", courseID).
-		Delete(&domain.Course{}).Error
+		Delete(&models.CourseModel{}).Error
 }

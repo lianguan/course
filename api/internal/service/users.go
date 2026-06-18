@@ -53,13 +53,14 @@ func (s *UsersService) SignUp(ctx context.Context, input domain.UserSignUpInput)
 
 	verificationCode := s.otpGenerator.RandomSecret(s.verificationCodeLength)
 
+	now := time.Now().Unix()
 	user := domain.User{
 		Name:         input.Name,
 		Password:     passwordHash,
 		Phone:        input.Phone,
 		Email:        input.Email,
-		RegisteredAt: time.Now(),
-		LastVisitAt:  time.Now(),
+		RegisteredAt: now,
+		LastVisitAt:  now,
 		Verification: domain.Verification{
 			Code: verificationCode,
 		},
@@ -150,7 +151,7 @@ func (s *UsersService) createSession(ctx context.Context, userID uint) (domain.T
 
 	session := domain.Session{
 		RefreshToken: res.RefreshToken,
-		ExpiresAt:    time.Now().Add(s.refreshTokenTTL),
+		ExpiresAt:    time.Now().Add(s.refreshTokenTTL).Unix(),
 	}
 
 	err = s.repo.SetSession(ctx, userID, session)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 	"gorm.io/gorm"
 )
 
@@ -16,33 +17,37 @@ func NewOrdersRepo(db *gorm.DB) *OrdersRepo {
 }
 
 func (r *OrdersRepo) Create(ctx context.Context, order domain.Order) error {
-	return r.db.WithContext(ctx).Create(&order).Error
+	var model models.OrderModel
+	model.FromDomain(order)
+	return r.db.WithContext(ctx).Create(&model).Error
 }
 
 func (r *OrdersRepo) AddTransaction(ctx context.Context, id uint, transaction domain.Transaction) (domain.Order, error) {
-	var order domain.Order
-	if err := r.db.WithContext(ctx).First(&order, id).Error; err != nil {
-		return order, err
+	var model models.OrderModel
+	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+		return domain.Order{}, err
 	}
 
+	order := model.ToDomain()
 	order.Transactions = append(order.Transactions, transaction)
 	order.Status = transaction.Status
 
-	if err := r.db.WithContext(ctx).Save(&order).Error; err != nil {
-		return order, err
+	model.FromDomain(order)
+	if err := r.db.WithContext(ctx).Save(&model).Error; err != nil {
+		return domain.Order{}, err
 	}
 
-	return order, nil
+	return model.ToDomain(), nil
 }
 
 func (r *OrdersRepo) GetBySchool(ctx context.Context, schoolID uint, query domain.GetOrdersQuery) ([]domain.Order, int64, error) {
-	var orders []domain.Order
+	var orderModels []models.OrderModel
 	var count int64
 
-	db := r.db.WithContext(ctx).Model(&domain.Order{}).Where("school_id = ?", schoolID)
+	db := r.db.WithContext(ctx).Model(&models.OrderModel{}).Where("school_id = ?", schoolID)
 
 	if query.Search != "" {
-		db = db.Where("student LIKE ? OR offer LIKE ? OR promo LIKE ?",
+		db = db.Where("student_name LIKE ? OR offer_name LIKE ? OR promo_code LIKE ?",
 			"%"+query.Search+"%", "%"+query.Search+"%", "%"+query.Search+"%")
 	}
 	if query.Status != "" {
@@ -66,19 +71,30 @@ func (r *OrdersRepo) GetBySchool(ctx context.Context, schoolID uint, query domai
 		db = db.Offset(int(query.PaginationQuery.Skip))
 	}
 
-	err := db.Order("created_at DESC").Find(&orders).Error
-	return orders, count, err
+	err := db.Order("created_at DESC").Find(&orderModels).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	orders := make([]domain.Order, len(orderModels))
+	for i, m := range orderModels {
+		orders[i] = m.ToDomain()
+	}
+	return orders, count, nil
 }
 
 func (r *OrdersRepo) GetByID(ctx context.Context, id uint) (domain.Order, error) {
-	var order domain.Order
-	err := r.db.WithContext(ctx).First(&order, id).Error
-	return order, err
+	var model models.OrderModel
+	err := r.db.WithContext(ctx).First(&model, id).Error
+	if err != nil {
+		return domain.Order{}, err
+	}
+	return model.ToDomain(), nil
 }
 
 func (r *OrdersRepo) SetStatus(ctx context.Context, id uint, status string) error {
 	return r.db.WithContext(ctx).
-		Model(&domain.Order{}).
+		Model(&models.OrderModel{}).
 		Where("id = ?", id).
 		Update("status", status).Error
 }

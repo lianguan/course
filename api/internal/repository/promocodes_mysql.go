@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 	"gorm.io/gorm"
 )
 
@@ -17,8 +18,10 @@ func NewPromocodeRepo(db *gorm.DB) *PromocodesRepo {
 }
 
 func (r *PromocodesRepo) Create(ctx context.Context, promocode domain.PromoCode) (uint, error) {
-	err := r.db.WithContext(ctx).Create(&promocode).Error
-	return promocode.ID, err
+	var model models.PromoCodeModel
+	model.FromDomain(promocode)
+	err := r.db.WithContext(ctx).Create(&model).Error
+	return model.ID, err
 }
 
 func (r *PromocodesRepo) Update(ctx context.Context, inp domain.UpdatePromoCodeInput) error {
@@ -30,7 +33,7 @@ func (r *PromocodesRepo) Update(ctx context.Context, inp domain.UpdatePromoCodeI
 	if inp.DiscountPercentage != 0 {
 		updates["discount_percentage"] = inp.DiscountPercentage
 	}
-	if !inp.ExpiresAt.IsZero() {
+	if inp.ExpiresAt != 0 {
 		updates["expires_at"] = inp.ExpiresAt
 	}
 	if inp.OfferIDs != nil {
@@ -38,7 +41,7 @@ func (r *PromocodesRepo) Update(ctx context.Context, inp domain.UpdatePromoCodeI
 	}
 
 	return r.db.WithContext(ctx).
-		Model(&domain.PromoCode{}).
+		Model(&models.PromoCodeModel{}).
 		Where("id = ? AND school_id = ?", inp.ID, inp.SchoolID).
 		Updates(updates).Error
 }
@@ -46,41 +49,48 @@ func (r *PromocodesRepo) Update(ctx context.Context, inp domain.UpdatePromoCodeI
 func (r *PromocodesRepo) Delete(ctx context.Context, schoolID, id uint) error {
 	return r.db.WithContext(ctx).
 		Where("id = ? AND school_id = ?", id, schoolID).
-		Delete(&domain.PromoCode{}).Error
+		Delete(&models.PromoCodeModel{}).Error
 }
 
 func (r *PromocodesRepo) GetByCode(ctx context.Context, schoolID uint, code string) (domain.PromoCode, error) {
-	var promocode domain.PromoCode
+	var model models.PromoCodeModel
 	err := r.db.WithContext(ctx).
 		Where("school_id = ? AND code = ?", schoolID, code).
-		First(&promocode).Error
+		First(&model).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.PromoCode{}, domain.ErrPromoNotFound
 		}
 		return domain.PromoCode{}, err
 	}
-	return promocode, nil
+	return model.ToDomain(), nil
 }
 
 func (r *PromocodesRepo) GetByID(ctx context.Context, schoolID, id uint) (domain.PromoCode, error) {
-	var promocode domain.PromoCode
+	var model models.PromoCodeModel
 	err := r.db.WithContext(ctx).
 		Where("id = ? AND school_id = ?", id, schoolID).
-		First(&promocode).Error
+		First(&model).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.PromoCode{}, domain.ErrPromoNotFound
 		}
 		return domain.PromoCode{}, err
 	}
-	return promocode, nil
+	return model.ToDomain(), nil
 }
 
 func (r *PromocodesRepo) GetBySchool(ctx context.Context, schoolID uint) ([]domain.PromoCode, error) {
-	var promocodes []domain.PromoCode
+	var promoModels []models.PromoCodeModel
 	err := r.db.WithContext(ctx).
 		Where("school_id = ?", schoolID).
-		Find(&promocodes).Error
-	return promocodes, err
+		Find(&promoModels).Error
+	if err != nil {
+		return nil, err
+	}
+	promocodes := make([]domain.PromoCode, len(promoModels))
+	for i, m := range promoModels {
+		promocodes[i] = m.ToDomain()
+	}
+	return promocodes, nil
 }

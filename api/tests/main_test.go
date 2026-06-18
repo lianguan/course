@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"ultrathreads/internal/config"
-	"ultrathreads/internal/delivery"
+	"ultrathreads/internal/handler"
 	"ultrathreads/internal/repository"
 	"ultrathreads/internal/service"
 	"ultrathreads/pkg/auth"
@@ -30,7 +30,7 @@ type APITestSuite struct {
 	suite.Suite
 
 	db       *gorm.DB
-	handler  *delivery.Handler
+	handler  *handler.Handler
 	services *service.Services
 	repos    *repository.Repositories
 
@@ -108,8 +108,8 @@ func (s *APITestSuite) initDeps() {
 				PurchaseSuccessful: "../templates/purchase_successful.html",
 			},
 			Subjects: config.EmailSubjects{
-				Verification:       "Спасибо за регистрацию, %s!",
-				PurchaseSuccessful: "Покупка прошла успешно!",
+				Verification:       "Thank you for registration, %s!",
+				PurchaseSuccessful: "Purchase completed successfully!",
 			},
 		},
 		AccessTokenTTL:         time.Minute * 15,
@@ -121,7 +121,7 @@ func (s *APITestSuite) initDeps() {
 
 	s.repos = repos
 	s.services = services
-	s.handler = delivery.NewHandler(services, tokenManager)
+	s.handler = handler.NewHandler(services, tokenManager)
 	s.hasher = hasher
 	s.tokenManager = tokenManager
 }

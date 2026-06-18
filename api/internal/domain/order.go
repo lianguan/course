@@ -1,7 +1,5 @@
 package domain
 
-import "time"
-
 const (
 	OrderStatusCreated  = "created"  // 已创建
 	OrderStatusPaid     = "paid"     // 已支付
@@ -10,33 +8,37 @@ const (
 	OrderStatusOther    = "other"    // 其他
 )
 
+// Order 订单实体
 type Order struct {
-	ID           uint             `gorm:"primaryKey;autoIncrement" json:"id"`       // 订单ID
-	SchoolID     uint             `gorm:"not null;index" json:"schoolId"`           // 所属学校ID
-	Student      StudentInfoShort `gorm:"serializer:json" json:"student"`           // 学生信息
-	Offer        OrderOfferInfo   `gorm:"serializer:json" json:"offer"`             // 优惠信息
-	Promo        OrderPromoInfo   `gorm:"serializer:json" json:"promo"`             // 优惠码信息
-	CreatedAt    time.Time        `gorm:"not null" json:"createdAt"`                // 创建时间
-	Amount       uint             `gorm:"not null" json:"amount"`                   // 订单金额
-	Currency     string           `gorm:"size:10;not null" json:"currency"`         // 货币类型
-	Status       string           `gorm:"size:50;not null;index" json:"status"`     // 订单状态
-	Transactions []Transaction    `gorm:"serializer:json" json:"transactions"`      // 交易记录
+	ID           uint             // 订单ID
+	SchoolID     uint             // 所属学校ID
+	Student      StudentInfoShort // 学生信息
+	Offer        OrderOfferInfo   // 优惠信息
+	Promo        OrderPromoInfo   // 优惠码信息
+	CreatedAt    int64            // 创建时间（Unix 时间戳）
+	Amount       uint             // 订单金额
+	Currency     string           // 货币类型
+	Status       string           // 订单状态
+	Transactions []Transaction    // 交易记录
 }
 
+// OrderOfferInfo 订单优惠信息值对象
 type OrderOfferInfo struct {
-	ID   uint   `json:"id"`   // 优惠ID
-	Name string `json:"name"` // 优惠名称
+	ID   uint   // 优惠ID
+	Name string // 优惠名称
 }
 
+// OrderPromoInfo 订单优惠码信息值对象
 type OrderPromoInfo struct {
-	ID   uint   `json:"id"`   // 优惠码ID
-	Code string `json:"code"` // 优惠码
+	ID   uint   // 优惠码ID
+	Code string // 优惠码
 }
 
+// Transaction 交易记录值对象
 type Transaction struct {
-	Status         string    `json:"status"`         // 交易状态
-	CreatedAt      time.Time `json:"createdAt"`      // 交易时间
-	AdditionalInfo string    `json:"additionalInfo"` // 附加信息
+	Status         string // 交易状态
+	CreatedAt      int64  // 交易时间（Unix 时间戳）
+	AdditionalInfo string // 附加信息
 }
 
 // IsCreated 检查订单是否处于创建状态
@@ -85,7 +87,7 @@ func (o *Order) HasPromo() bool {
 }
 
 // NewOrder 创建新订单
-func NewOrder(schoolID uint, student StudentInfoShort, offer OrderOfferInfo, amount uint, currency string, promo OrderPromoInfo) *Order {
+func NewOrder(schoolID uint, student StudentInfoShort, offer OrderOfferInfo, amount uint, currency string, promo OrderPromoInfo, now int64) *Order {
 	return &Order{
 		SchoolID:     schoolID,
 		Student:      student,
@@ -93,7 +95,7 @@ func NewOrder(schoolID uint, student StudentInfoShort, offer OrderOfferInfo, amo
 		Promo:        promo,
 		Amount:       amount,
 		Currency:     currency,
-		CreatedAt:    time.Now(),
+		CreatedAt:    now,
 		Status:       OrderStatusCreated,
 		Transactions: make([]Transaction, 0),
 	}

@@ -42,7 +42,7 @@ func (s *SurveysService) SaveStudentAnswers(ctx context.Context, inp domain.Save
 			Email: student.Email,
 		},
 		ModuleID:    inp.ModuleID,
-		SubmittedAt: time.Now(),
+		SubmittedAt: time.Now().Unix(),
 		Answers:     inp.Answers,
 	})
 }

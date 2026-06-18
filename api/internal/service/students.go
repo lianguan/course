@@ -247,7 +247,7 @@ func (s *StudentsService) createSession(ctx context.Context, studentID uint) (do
 
 	session := domain.Session{
 		RefreshToken: res.RefreshToken,
-		ExpiresAt:    time.Now().Add(s.refreshTokenTTL),
+		ExpiresAt:    time.Now().Add(s.refreshTokenTTL).Unix(),
 	}
 
 	err = s.repo.SetSession(ctx, studentID, session)

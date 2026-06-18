@@ -1,8 +1,7 @@
 package domain
 
-import "time"
-
+// Session 会话值对象
 type Session struct {
-	RefreshToken string    `json:"refreshToken"`
-	ExpiresAt    time.Time `json:"expiresAt"`
+	RefreshToken string // 刷新令牌
+	ExpiresAt    int64  // 过期时间（Unix 时间戳）
 }

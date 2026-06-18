@@ -1,57 +1,61 @@
 package domain
 
-import "time"
-
+// Course 课程实体
 type Course struct {
-	ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`      // 课程ID
-	Name        string    `gorm:"size:255;not null" json:"name"`           // 课程名称
-	Code        string    `gorm:"size:100;uniqueIndex" json:"code"`        // 课程编码
-	Description string    `gorm:"type:text" json:"description"`            // 课程描述
-	Color       string    `gorm:"size:50" json:"color"`                    // 主题颜色
-	ImageURL    string    `gorm:"size:500" json:"imageUrl"`                // 封面图片URL
-	CreatedAt   time.Time `gorm:"not null" json:"createdAt"`               // 创建时间
-	UpdatedAt   time.Time `gorm:"not null" json:"updatedAt"`               // 更新时间
-	Published   bool      `gorm:"not null;default:false" json:"published"` // 是否已发布
+	ID          uint   // 课程ID
+	Name        string // 课程名称
+	Code        string // 课程编码
+	Description string // 课程描述
+	Color       string // 主题颜色
+	ImageURL    string // 封面图片URL
+	CreatedAt   int64  // 创建时间（Unix 时间戳）
+	UpdatedAt   int64  // 更新时间（Unix 时间戳）
+	Published   bool   // 是否已发布
 }
 
+// Module 模块实体
 type Module struct {
-	ID        uint     `gorm:"primaryKey;autoIncrement" json:"id"`       // 模块ID
-	Name      string   `gorm:"size:255;not null" json:"name"`            // 模块名称
-	Position  uint     `gorm:"not null;default:0" json:"position"`       // 排序位置
-	Published bool     `gorm:"not null;default:false" json:"published"`  // 是否已发布
-	CourseID  uint     `gorm:"not null;index" json:"courseId"`           // 所属课程ID
-	PackageID uint     `gorm:"index" json:"packageId,omitempty"`         // 所属套餐ID
-	SchoolID  uint     `gorm:"not null;index" json:"schoolId"`           // 所属学校ID
-	Lessons   []Lesson `gorm:"serializer:json" json:"lessons,omitempty"` // 课时列表
-	Survey    Survey   `gorm:"serializer:json" json:"survey,omitempty"`  // 调查问卷
+	ID        uint     // 模块ID
+	Name      string   // 模块名称
+	Position  uint     // 排序位置
+	Published bool     // 是否已发布
+	CourseID  uint     // 所属课程ID
+	PackageID uint     // 所属套餐ID
+	SchoolID  uint     // 所属学校ID
+	Lessons   []Lesson // 课时列表
+	Survey    Survey   // 调查问卷
 }
 
+// Lesson 课时实体
 type Lesson struct {
-	ID        uint   `gorm:"primaryKey;autoIncrement" json:"id"`      // 课时ID
-	Name      string `gorm:"size:255;not null" json:"name"`           // 课时名称
-	Position  uint   `gorm:"not null;default:0" json:"position"`      // 排序位置
-	Published bool   `gorm:"not null;default:false" json:"published"` // 是否已发布
-	Content   string `gorm:"type:text" json:"content,omitempty"`      // 课时内容
-	SchoolID  uint   `gorm:"not null;index" json:"schoolId"`          // 所属学校ID
+	ID        uint   // 课时ID
+	Name      string // 课时名称
+	Position  uint   // 排序位置
+	Published bool   // 是否已发布
+	Content   string // 课时内容
+	SchoolID  uint   // 所属学校ID
 }
 
+// LessonContent 课时内容值对象
 type LessonContent struct {
-	LessonID uint   `gorm:"primaryKey" json:"lessonId"`     // 课时ID
-	SchoolID uint   `gorm:"not null;index" json:"schoolId"` // 所属学校ID
-	Content  string `gorm:"type:text" json:"content"`       // 课时内容
+	LessonID uint   // 课时ID
+	SchoolID uint   // 所属学校ID
+	Content  string // 课时内容
 }
 
+// Package 套餐实体
 type Package struct {
-	ID       uint     `gorm:"primaryKey;autoIncrement" json:"id"` // 套餐ID
-	Name     string   `gorm:"size:255;not null" json:"name"`      // 套餐名称
-	CourseID uint     `gorm:"not null;index" json:"courseId"`     // 所属课程ID
-	SchoolID uint     `gorm:"not null;index" json:"schoolId"`     // 所属学校ID
-	Modules  []Module `gorm:"-" json:"modules"`                   // 模块列表
+	ID       uint     // 套餐ID
+	Name     string   // 套餐名称
+	CourseID uint     // 所属课程ID
+	SchoolID uint     // 所属学校ID
+	Modules  []Module // 模块列表
 }
 
+// ModuleContent 模块内容值对象
 type ModuleContent struct {
-	Lessons []Lesson `gorm:"serializer:json" json:"lessons"` // 课时列表
-	Survey  Survey   `gorm:"serializer:json" json:"survey"`  // 调查问卷
+	Lessons []Lesson // 课时列表
+	Survey  Survey   // 调查问卷
 }
 
 // IsPublished 检查模块是否已发布

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 	"gorm.io/gorm"
 )
 
@@ -16,46 +17,56 @@ func NewLessonContentRepo(db *gorm.DB) *LessonContentRepo {
 }
 
 func (r *LessonContentRepo) GetByLessons(ctx context.Context, lessonIDs []uint) ([]domain.LessonContent, error) {
-	var contents []domain.LessonContent
+	var contentModels []models.LessonContentModel
 	err := r.db.WithContext(ctx).
 		Where("lesson_id IN ?", lessonIDs).
-		Find(&contents).Error
-	return contents, err
+		Find(&contentModels).Error
+	if err != nil {
+		return nil, err
+	}
+	contents := make([]domain.LessonContent, len(contentModels))
+	for i, m := range contentModels {
+		contents[i] = m.ToDomain()
+	}
+	return contents, nil
 }
 
 func (r *LessonContentRepo) GetByLesson(ctx context.Context, lessonID uint) (domain.LessonContent, error) {
-	var content domain.LessonContent
+	var model models.LessonContentModel
 	err := r.db.WithContext(ctx).
 		Where("lesson_id = ?", lessonID).
-		First(&content).Error
-	return content, err
+		First(&model).Error
+	if err != nil {
+		return domain.LessonContent{}, err
+	}
+	return model.ToDomain(), nil
 }
 
 func (r *LessonContentRepo) Update(ctx context.Context, schoolID, lessonID uint, content string) error {
-	var lc domain.LessonContent
+	var model models.LessonContentModel
 	err := r.db.WithContext(ctx).
 		Where("lesson_id = ? AND school_id = ?", lessonID, schoolID).
-		First(&lc).Error
+		First(&model).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// Create new
-		lc = domain.LessonContent{
+		model = models.LessonContentModel{
 			LessonID: lessonID,
 			SchoolID: schoolID,
 			Content:  content,
 		}
-		return r.db.WithContext(ctx).Create(&lc).Error
+		return r.db.WithContext(ctx).Create(&model).Error
 	} else if err != nil {
 		return err
 	}
 
 	// Update existing
-	lc.Content = content
-	return r.db.WithContext(ctx).Save(&lc).Error
+	model.Content = content
+	return r.db.WithContext(ctx).Save(&model).Error
 }
 
 func (r *LessonContentRepo) DeleteContent(ctx context.Context, schoolID uint, lessonIDs []uint) error {
 	return r.db.WithContext(ctx).
 		Where("school_id = ? AND lesson_id IN ?", schoolID, lessonIDs).
-		Delete(&domain.LessonContent{}).Error
+		Delete(&models.LessonContentModel{}).Error
 }

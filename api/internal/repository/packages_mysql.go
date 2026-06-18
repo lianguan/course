@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 	"gorm.io/gorm"
 )
 
@@ -16,30 +17,49 @@ func NewPackagesRepo(db *gorm.DB) *PackagesRepo {
 }
 
 func (r *PackagesRepo) Create(ctx context.Context, pkg domain.Package) (uint, error) {
-	err := r.db.WithContext(ctx).Create(&pkg).Error
-	return pkg.ID, err
+	var model models.PackageModel
+	model.FromDomain(pkg)
+	err := r.db.WithContext(ctx).Create(&model).Error
+	return model.ID, err
 }
 
 func (r *PackagesRepo) GetByCourse(ctx context.Context, courseID uint) ([]domain.Package, error) {
-	var packages []domain.Package
+	var pkgModels []models.PackageModel
 	err := r.db.WithContext(ctx).
 		Where("course_id = ?", courseID).
-		Find(&packages).Error
-	return packages, err
+		Find(&pkgModels).Error
+	if err != nil {
+		return nil, err
+	}
+	packages := make([]domain.Package, len(pkgModels))
+	for i, m := range pkgModels {
+		packages[i] = m.ToDomain()
+	}
+	return packages, nil
 }
 
 func (r *PackagesRepo) GetByID(ctx context.Context, id uint) (domain.Package, error) {
-	var pkg domain.Package
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&pkg).Error
-	return pkg, err
+	var model models.PackageModel
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&model).Error
+	if err != nil {
+		return domain.Package{}, err
+	}
+	return model.ToDomain(), nil
 }
 
 func (r *PackagesRepo) GetByIDs(ctx context.Context, ids []uint) ([]domain.Package, error) {
-	var packages []domain.Package
+	var pkgModels []models.PackageModel
 	err := r.db.WithContext(ctx).
 		Where("id IN ?", ids).
-		Find(&packages).Error
-	return packages, err
+		Find(&pkgModels).Error
+	if err != nil {
+		return nil, err
+	}
+	packages := make([]domain.Package, len(pkgModels))
+	for i, m := range pkgModels {
+		packages[i] = m.ToDomain()
+	}
+	return packages, nil
 }
 
 func (r *PackagesRepo) Update(ctx context.Context, inp domain.UpdatePackageInput) error {
@@ -50,7 +70,7 @@ func (r *PackagesRepo) Update(ctx context.Context, inp domain.UpdatePackageInput
 	}
 
 	return r.db.WithContext(ctx).
-		Model(&domain.Package{}).
+		Model(&models.PackageModel{}).
 		Where("id = ? AND school_id = ?", inp.ID, inp.SchoolID).
 		Updates(updates).Error
 }
@@ -58,5 +78,5 @@ func (r *PackagesRepo) Update(ctx context.Context, inp domain.UpdatePackageInput
 func (r *PackagesRepo) Delete(ctx context.Context, schoolID, id uint) error {
 	return r.db.WithContext(ctx).
 		Where("id = ? AND school_id = ?", id, schoolID).
-		Delete(&domain.Package{}).Error
+		Delete(&models.PackageModel{}).Error
 }

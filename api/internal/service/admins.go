@@ -100,7 +100,7 @@ func (s *AdminsService) CreateStudent(ctx context.Context, inp domain.CreateStud
 		Name:         inp.Name,
 		Email:        inp.Email,
 		Password:     passwordHash,
-		RegisteredAt: time.Now(),
+		RegisteredAt: time.Now().Unix(),
 		SchoolID:     inp.SchoolID,
 		Verification: domain.Verification{Verified: true},
 	}
@@ -135,7 +135,7 @@ func (s *AdminsService) createSession(ctx context.Context, adminID uint) (domain
 
 	session := domain.Session{
 		RefreshToken: res.RefreshToken,
-		ExpiresAt:    time.Now().Add(s.refreshTokenTTL),
+		ExpiresAt:    time.Now().Add(s.refreshTokenTTL).Unix(),
 	}
 
 	err = s.repo.SetSession(ctx, adminID, session)

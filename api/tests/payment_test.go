@@ -47,16 +47,16 @@ func (s *APITestSuite) TestFondyCallbackApproved() {
 
 	s.mocks.emailSender.On("Send", email.SendEmailInput{
 		To:      studentEmail,
-		Subject: "Покупка прошла успешно!",
-		Body: fmt.Sprintf(`<h1>%s, спасибо большое за покупку "%s"!</h1>
+		Subject: "Purchase completed successfully!",
+		Body: fmt.Sprintf(`<h1>%s, thank you very much for your purchase of "%s"!</h1>
 <br>
-<p>Надеюсь данный материал будет тебе полезен и интересен!</p>
-<p>Если у тебя возникают вопросы или ты хочешь поделиться своим отзывом - пиши мне письмо на <a href="mailto:admin@ultrathreads.com">admin@ultrathreads.com</a>.</p>
-<p>Мне крайне важен твой отзыв, чтобы улучшать материалы и делать курс максимально полезным!</p>
+<p>I hope this material will be useful and interesting to you!</p>
+<p>If you have any questions or want to share your feedback - write me an email at <a href="mailto:admin@ultrathreads.com">admin@ultrathreads.com</a>.</p>
+<p>Your feedback is extremely important to me to improve the materials and make the course as useful as possible!</p>
 
 <br><br>
 
-<p><i>С уважением, Максим</i></p>`, studentName, offerName),
+<p><i>Best regards, Maksym</i></p>`, studentName, offerName),
 	}).Return(nil)
 
 	file, err := ioutil.ReadFile("./fixtures/callback_approved.json")

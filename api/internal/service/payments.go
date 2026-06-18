@@ -171,7 +171,7 @@ func createTransaction(callbackData fondy.Callback) (domain.Transaction, error) 
 
 	return domain.Transaction{
 		Status:         status,
-		CreatedAt:      time.Now(),
+		CreatedAt:      time.Now().Unix(),
 		AdditionalInfo: string(additionalInfo),
 	}, nil
 }

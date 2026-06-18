@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 
 	"gorm.io/gorm"
 )
@@ -18,23 +19,24 @@ func NewSchoolsRepo(db *gorm.DB) *SchoolsRepo {
 }
 
 func (r *SchoolsRepo) Create(ctx context.Context, name string) (uint, error) {
-	school := domain.School{
-		Name:         name,
-		RegisteredAt: time.Now(),
-	}
-	err := r.db.WithContext(ctx).Create(&school).Error
-	return school.ID, err
+	var model models.SchoolModel
+	model.Name = name
+	model.RegisteredAt = time.Now()
+	err := r.db.WithContext(ctx).Create(&model).Error
+	return model.ID, err
 }
 
 func (r *SchoolsRepo) GetByDomain(ctx context.Context, domainName string) (domain.School, error) {
-	var school domain.School
+	var model models.SchoolModel
 	// 使用 MySQL JSON 函数直接在数据库层搜索域名
 	err := r.db.WithContext(ctx).
 		Where("JSON_CONTAINS(settings->'$.domains', ?)", `"`+domainName+`"`).
-		First(&school).Error
+		First(&model).Error
 	if err != nil {
 		return domain.School{}, err
 	}
+
+	school := model.ToDomain()
 
 	// Load courses for this school
 	if err := r.loadCourses(ctx, &school); err != nil {
@@ -45,11 +47,13 @@ func (r *SchoolsRepo) GetByDomain(ctx context.Context, domainName string) (domai
 }
 
 func (r *SchoolsRepo) GetById(ctx context.Context, id uint) (domain.School, error) {
-	var school domain.School
-	err := r.db.WithContext(ctx).First(&school, id).Error
+	var model models.SchoolModel
+	err := r.db.WithContext(ctx).First(&model, id).Error
 	if err != nil {
 		return domain.School{}, err
 	}
+
+	school := model.ToDomain()
 
 	// Load courses for this school
 	if err := r.loadCourses(ctx, &school); err != nil {
@@ -60,8 +64,8 @@ func (r *SchoolsRepo) GetById(ctx context.Context, id uint) (domain.School, erro
 }
 
 func (r *SchoolsRepo) UpdateSettings(ctx context.Context, id uint, inp domain.UpdateSchoolSettingsInput) error {
-	var school domain.School
-	if err := r.db.WithContext(ctx).First(&school, id).Error; err != nil {
+	var model models.SchoolModel
+	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
 		return err
 	}
 
@@ -71,7 +75,7 @@ func (r *SchoolsRepo) UpdateSettings(ctx context.Context, id uint, inp domain.Up
 		updates["name"] = *inp.Name
 	}
 
-	settings := school.Settings
+	settings := model.Settings.ToDomain()
 
 	if inp.Color != nil {
 		settings.Color = *inp.Color
@@ -120,29 +124,42 @@ func (r *SchoolsRepo) UpdateSettings(ctx context.Context, id uint, inp domain.Up
 		}
 	}
 
-	updates["settings"] = settings
+	var jsonSettings models.JSONSettings
+	jsonSettings.FromDomain(settings)
+	updates["settings"] = jsonSettings
 
-	return r.db.WithContext(ctx).Model(&domain.School{}).Where("id = ?", id).Updates(updates).Error
+	return r.db.WithContext(ctx).Model(&models.SchoolModel{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *SchoolsRepo) SetFondyCredentials(ctx context.Context, id uint, fondy domain.Fondy) error {
-	var school domain.School
-	if err := r.db.WithContext(ctx).First(&school, id).Error; err != nil {
+	var model models.SchoolModel
+	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
 		return err
 	}
-	school.Settings.Fondy = fondy
-	return r.db.WithContext(ctx).Model(&domain.School{}).Where("id = ?", id).Update("settings", school.Settings).Error
+
+	settings := model.Settings.ToDomain()
+	settings.Fondy = fondy
+
+	var jsonSettings models.JSONSettings
+	jsonSettings.FromDomain(settings)
+
+	return r.db.WithContext(ctx).Model(&models.SchoolModel{}).Where("id = ?", id).Update("settings", jsonSettings).Error
 }
 
 func (r *SchoolsRepo) loadCourses(ctx context.Context, school *domain.School) error {
-	var courses []domain.Course
+	var courseModels []models.CourseModel
 	err := r.db.WithContext(ctx).
 		Joins("INNER JOIN modules ON modules.course_id = courses.id").
 		Where("modules.school_id = ?", school.ID).
 		Distinct().
-		Find(&courses).Error
+		Find(&courseModels).Error
 	if err != nil {
 		return err
+	}
+
+	courses := make([]domain.Course, len(courseModels))
+	for i, m := range courseModels {
+		courses[i] = m.ToDomain()
 	}
 	school.Courses = courses
 	return nil

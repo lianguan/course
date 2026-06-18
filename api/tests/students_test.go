@@ -30,10 +30,10 @@ func (s *APITestSuite) TestStudentSignUp() {
 	s.mocks.otpGenerator.On("RandomSecret", 8).Return(verificationCode)
 	s.mocks.emailSender.On("Send", email.SendEmailInput{
 		To:      studentEmail,
-		Subject: "Спасибо за регистрацию, Test Student!",
-		Body: fmt.Sprintf(`<h1>Спасибо за регистрацию!</h1>
+		Subject: "Thank you for registration, Test Student!",
+		Body: fmt.Sprintf(`<h1>Thank you for registration!</h1>
 <br>
-<p>Чтобы подтвердить свой аккаунт, <a href="https://workshop.ultrathreads.com/verification?code=%s">переходи по ссылке</a>.</p>`, verificationCode),
+<p>To confirm your account, <a href="https://workshop.ultrathreads.com/verification?code=%s">click the link</a>.</p>`, verificationCode),
 	}).Return(nil)
 
 	req, _ := http.NewRequest("POST", "/api/v1/students/sign-up", bytes.NewBuffer([]byte(signUpData)))

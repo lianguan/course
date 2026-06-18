@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"ultrathreads/internal/domain"
+	"ultrathreads/internal/repository/models"
 
 	"gorm.io/gorm"
 )
@@ -18,45 +19,68 @@ func NewOffersRepo(db *gorm.DB) *OffersRepo {
 }
 
 func (r *OffersRepo) Create(ctx context.Context, offer domain.Offer) (uint, error) {
-	err := r.db.WithContext(ctx).Create(&offer).Error
-	return offer.ID, err
+	var model models.OfferModel
+	model.FromDomain(offer)
+	err := r.db.WithContext(ctx).Create(&model).Error
+	return model.ID, err
 }
 
 func (r *OffersRepo) GetBySchool(ctx context.Context, schoolID uint) ([]domain.Offer, error) {
-	var offers []domain.Offer
+	var offerModels []models.OfferModel
 	err := r.db.WithContext(ctx).
 		Where("school_id = ?", schoolID).
-		Find(&offers).Error
-	return offers, err
+		Find(&offerModels).Error
+	if err != nil {
+		return nil, err
+	}
+	offers := make([]domain.Offer, len(offerModels))
+	for i, m := range offerModels {
+		offers[i] = m.ToDomain()
+	}
+	return offers, nil
 }
 
 func (r *OffersRepo) GetByID(ctx context.Context, id uint) (domain.Offer, error) {
-	var offer domain.Offer
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&offer).Error
+	var model models.OfferModel
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&model).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.Offer{}, domain.ErrOfferNotFound
 		}
 		return domain.Offer{}, err
 	}
-	return offer, nil
+	return model.ToDomain(), nil
 }
 
 func (r *OffersRepo) GetByPackages(ctx context.Context, packageIDs []uint) ([]domain.Offer, error) {
-	var offers []domain.Offer
+	var offerModels []models.OfferModel
 	// 使用 MySQL JSON 函数查询包含指定套餐ID的优惠
 	err := r.db.WithContext(ctx).
 		Where("JSON_CONTAINS(package_ids, ?)", packageIDs).
-		Find(&offers).Error
-	return offers, err
+		Find(&offerModels).Error
+	if err != nil {
+		return nil, err
+	}
+	offers := make([]domain.Offer, len(offerModels))
+	for i, m := range offerModels {
+		offers[i] = m.ToDomain()
+	}
+	return offers, nil
 }
 
 func (r *OffersRepo) GetByIDs(ctx context.Context, ids []uint) ([]domain.Offer, error) {
-	var offers []domain.Offer
+	var offerModels []models.OfferModel
 	err := r.db.WithContext(ctx).
 		Where("id IN ?", ids).
-		Find(&offers).Error
-	return offers, err
+		Find(&offerModels).Error
+	if err != nil {
+		return nil, err
+	}
+	offers := make([]domain.Offer, len(offerModels))
+	for i, m := range offerModels {
+		offers[i] = m.ToDomain()
+	}
+	return offers, nil
 }
 
 func (r *OffersRepo) Update(ctx context.Context, inp domain.UpdateOfferInput) error {
@@ -84,7 +108,7 @@ func (r *OffersRepo) Update(ctx context.Context, inp domain.UpdateOfferInput) er
 	}
 
 	return r.db.WithContext(ctx).
-		Model(&domain.Offer{}).
+		Model(&models.OfferModel{}).
 		Where("id = ? AND school_id = ?", inp.ID, inp.SchoolID).
 		Updates(updates).Error
 }
@@ -92,5 +116,5 @@ func (r *OffersRepo) Update(ctx context.Context, inp domain.UpdateOfferInput) er
 func (r *OffersRepo) Delete(ctx context.Context, schoolID, id uint) error {
 	return r.db.WithContext(ctx).
 		Where("id = ? AND school_id = ?", id, schoolID).
-		Delete(&domain.Offer{}).Error
+		Delete(&models.OfferModel{}).Error
 }

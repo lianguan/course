@@ -51,7 +51,7 @@ func (s *FilesService) GetByID(ctx context.Context, id, schoolID uint) (domain.F
 func (s *FilesService) UploadAndSaveFile(ctx context.Context, file domain.File) (string, error) {
 	defer removeFile(file.Name)
 
-	file.UploadStartedAt = time.Now()
+	file.UploadStartedAt = time.Now().Unix()
 
 	if _, err := s.Save(ctx, file); err != nil {
 		return "", err

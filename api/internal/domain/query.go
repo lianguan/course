@@ -1,52 +1,42 @@
 package domain
 
+// PaginationQuery 分页查询值对象
 type PaginationQuery struct {
-	Skip  int64 `form:"skip"`
-	Limit int64 `form:"limit"`
+	Skip  int64 // 跳过条数
+	Limit int64 // 每页条数
 }
 
+// SearchQuery 搜索查询值对象
 type SearchQuery struct {
-	Search string `form:"search"`
+	Search string // 搜索关键词
 }
 
+// StudentFiltersQuery 学生筛选查询值对象
 type StudentFiltersQuery struct {
-	RegisterDateFrom  string `form:"registerDateFrom"`
-	RegisterDateTo    string `form:"registerDateTo"`
-	LastVisitDateFrom string `form:"lastVisitDateFrom"`
-	LastVisitDateTo   string `form:"lastVisitDateTo"`
-	Verified          *bool  `form:"verified"`
+	RegisterDateFrom  string // 注册日期起始
+	RegisterDateTo    string // 注册日期截止
+	LastVisitDateFrom string // 最后登录日期起始
+	LastVisitDateTo   string // 最后登录日期截止
+	Verified          *bool  // 是否验证
 }
 
+// GetStudentsQuery 获取学生列表查询值对象
 type GetStudentsQuery struct {
 	PaginationQuery
 	SearchQuery
 	StudentFiltersQuery
 }
 
+// OrdersFiltersQuery 订单筛选查询值对象
 type OrdersFiltersQuery struct {
-	DateFrom string `form:"dateFrom"`
-	DateTo   string `form:"dateTo"`
-	Status   string `form:"status"`
+	DateFrom string // 日期起始
+	DateTo   string // 日期截止
+	Status   string // 订单状态
 }
 
+// GetOrdersQuery 获取订单列表查询值对象
 type GetOrdersQuery struct {
 	PaginationQuery
 	SearchQuery
 	OrdersFiltersQuery
-}
-
-func (p PaginationQuery) GetSkip() *int64 {
-	if p.Skip == 0 {
-		return nil
-	}
-
-	return &p.Skip
-}
-
-func (p PaginationQuery) GetLimit() *int64 {
-	if p.Limit == 0 {
-		return nil
-	}
-
-	return &p.Limit
 }
