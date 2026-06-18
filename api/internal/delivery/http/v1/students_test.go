@@ -431,7 +431,7 @@ func TestHandler_studentSetLessonFinished(t *testing.T) {
 }
 
 func TestHandler_studentSignUp(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockStudents, input service.StudentSignUpInput)
+	type mockBehavior func(r *mock_service.MockStudents, input domain.StudentSignUpInput)
 
 	schoolId := uint(1)
 
@@ -439,7 +439,7 @@ func TestHandler_studentSignUp(t *testing.T) {
 		name         string
 		requestBody  string
 		schoolId     uint
-		serviceInput service.StudentSignUpInput
+		serviceInput domain.StudentSignUpInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -448,14 +448,14 @@ func TestHandler_studentSignUp(t *testing.T) {
 			name:        "ok",
 			requestBody: `{"name":"Vasya","email":"test@test.com","password":"qwerty123","registerSource":"test-course"}`,
 			schoolId:    schoolId,
-			serviceInput: service.StudentSignUpInput{
+			serviceInput: domain.StudentSignUpInput{
 				Name:         "Vasya",
 				Email:        "test@test.com",
 				Password:     "qwerty123",
 				SchoolID:     schoolId,
 				SchoolDomain: "localhost",
 			},
-			mockBehavior: func(r *mock_service.MockStudents, input service.StudentSignUpInput) {
+			mockBehavior: func(r *mock_service.MockStudents, input domain.StudentSignUpInput) {
 				r.EXPECT().SignUp(context.Background(), input).Return(nil)
 			},
 			statusCode: 201,
@@ -464,7 +464,7 @@ func TestHandler_studentSignUp(t *testing.T) {
 			name:         "missing name",
 			requestBody:  `{"name":"","email":"test@test.com","password":"qwerty123","registerSource":"test-course"}`,
 			schoolId:     schoolId,
-			mockBehavior: func(r *mock_service.MockStudents, input service.StudentSignUpInput) {},
+			mockBehavior: func(r *mock_service.MockStudents, input domain.StudentSignUpInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -472,7 +472,7 @@ func TestHandler_studentSignUp(t *testing.T) {
 			name:         "invalid name",
 			requestBody:  `{"name":"q","email":"test@test.com","password":"qwerty123","registerSource":"test-course"}`,
 			schoolId:     schoolId,
-			mockBehavior: func(r *mock_service.MockStudents, input service.StudentSignUpInput) {},
+			mockBehavior: func(r *mock_service.MockStudents, input domain.StudentSignUpInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -480,7 +480,7 @@ func TestHandler_studentSignUp(t *testing.T) {
 			name:         "missing email",
 			requestBody:  `{"name":"Vasya","email":"","password":"qwerty123","registerSource":"test-course"}`,
 			schoolId:     schoolId,
-			mockBehavior: func(r *mock_service.MockStudents, input service.StudentSignUpInput) {},
+			mockBehavior: func(r *mock_service.MockStudents, input domain.StudentSignUpInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -488,7 +488,7 @@ func TestHandler_studentSignUp(t *testing.T) {
 			name:         "missing password",
 			requestBody:  `{"name":"Vasya","email":"test@test.com","password":"","registerSource":"test-course"}`,
 			schoolId:     schoolId,
-			mockBehavior: func(r *mock_service.MockStudents, input service.StudentSignUpInput) {},
+			mockBehavior: func(r *mock_service.MockStudents, input domain.StudentSignUpInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -496,7 +496,7 @@ func TestHandler_studentSignUp(t *testing.T) {
 			name:         "password too short",
 			requestBody:  `{"name":"Vasya","email":"test@test.com","password":"qwerty","registerSource":"test-course"}`,
 			schoolId:     schoolId,
-			mockBehavior: func(r *mock_service.MockStudents, input service.StudentSignUpInput) {},
+			mockBehavior: func(r *mock_service.MockStudents, input domain.StudentSignUpInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},

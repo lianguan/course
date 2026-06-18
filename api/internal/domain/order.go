@@ -38,3 +38,71 @@ type Transaction struct {
 	CreatedAt      time.Time `json:"createdAt"`      // 交易时间
 	AdditionalInfo string    `json:"additionalInfo"` // 附加信息
 }
+
+// IsCreated 检查订单是否处于创建状态
+func (o *Order) IsCreated() bool {
+	return o.Status == OrderStatusCreated
+}
+
+// IsPaid 检查订单是否已支付
+func (o *Order) IsPaid() bool {
+	return o.Status == OrderStatusPaid
+}
+
+// IsFailed 检查订单是否支付失败
+func (o *Order) IsFailed() bool {
+	return o.Status == OrderStatusFailed
+}
+
+// IsCanceled 检查订单是否已取消
+func (o *Order) IsCanceled() bool {
+	return o.Status == OrderStatusCanceled
+}
+
+// MarkAsPaid 标记订单为已支付
+func (o *Order) MarkAsPaid() {
+	o.Status = OrderStatusPaid
+}
+
+// MarkAsFailed 标记订单为支付失败
+func (o *Order) MarkAsFailed() {
+	o.Status = OrderStatusFailed
+}
+
+// MarkAsCanceled 标记订单为已取消
+func (o *Order) MarkAsCanceled() {
+	o.Status = OrderStatusCanceled
+}
+
+// AddTransaction 添加交易记录
+func (o *Order) AddTransaction(transaction Transaction) {
+	o.Transactions = append(o.Transactions, transaction)
+}
+
+// HasPromo 检查订单是否使用了优惠码
+func (o *Order) HasPromo() bool {
+	return o.Promo.ID != 0
+}
+
+// NewOrder 创建新订单
+func NewOrder(schoolID uint, student StudentInfoShort, offer OrderOfferInfo, amount uint, currency string, promo OrderPromoInfo) *Order {
+	return &Order{
+		SchoolID:     schoolID,
+		Student:      student,
+		Offer:        offer,
+		Promo:        promo,
+		Amount:       amount,
+		Currency:     currency,
+		CreatedAt:    time.Now(),
+		Status:       OrderStatusCreated,
+		Transactions: make([]Transaction, 0),
+	}
+}
+
+// CalculateDiscountedPrice 计算折扣后的价格
+func CalculateDiscountedPrice(originalPrice uint, discountPercentage int) uint {
+	if discountPercentage <= 0 || discountPercentage >= 100 {
+		return originalPrice
+	}
+	return (originalPrice * uint(100-discountPercentage)) / 100
+}

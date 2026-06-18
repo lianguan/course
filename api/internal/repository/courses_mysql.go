@@ -21,7 +21,7 @@ func (r *CoursesRepo) Create(ctx context.Context, schoolID uint, course domain.C
 	return course.ID, err
 }
 
-func (r *CoursesRepo) Update(ctx context.Context, inp UpdateCourseInput) error {
+func (r *CoursesRepo) Update(ctx context.Context, inp domain.UpdateCourseInput) error {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}

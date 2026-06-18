@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 )
 
 type OrdersService struct {
@@ -13,10 +11,10 @@ type OrdersService struct {
 	promoCodesService PromoCodes
 	studentsService   Students
 
-	repo repository.Orders
+	repo OrdersRepository
 }
 
-func NewOrdersService(repo repository.Orders, offersService Offers, promoCodesService PromoCodes, studentsService Students) *OrdersService {
+func NewOrdersService(repo OrdersRepository, offersService Offers, promoCodesService PromoCodes, studentsService Students) *OrdersService {
 	return &OrdersService{
 		repo:              repo,
 		offersService:     offersService,
@@ -41,34 +39,33 @@ func (s *OrdersService) Create(ctx context.Context, studentID, offerID, promocod
 		return 0, err
 	}
 
-	orderAmount := s.calculateOrderPrice(offer.Price.Value, promocode)
+	orderAmount := domain.CalculateDiscountedPrice(offer.Price.Value, promocode.DiscountPercentage)
 
-	order := domain.Order{
-		SchoolID: offer.SchoolID,
-		Student: domain.StudentInfoShort{
-			ID:    student.ID,
-			Name:  student.Name,
-			Email: student.Email,
-		},
-		Offer: domain.OrderOfferInfo{
-			ID:   offer.ID,
-			Name: offer.Name,
-		},
-		Amount:       orderAmount,
-		Currency:     offer.Price.Currency,
-		CreatedAt:    time.Now(),
-		Status:       domain.OrderStatusCreated,
-		Transactions: make([]domain.Transaction, 0),
-	}
-
+	promoInfo := domain.OrderPromoInfo{}
 	if promocode.ID != 0 {
-		order.Promo = domain.OrderPromoInfo{
+		promoInfo = domain.OrderPromoInfo{
 			ID:   promocode.ID,
 			Code: promocode.Code,
 		}
 	}
 
-	if err := s.repo.Create(ctx, order); err != nil {
+	order := domain.NewOrder(
+		offer.SchoolID,
+		domain.StudentInfoShort{
+			ID:    student.ID,
+			Name:  student.Name,
+			Email: student.Email,
+		},
+		domain.OrderOfferInfo{
+			ID:   offer.ID,
+			Name: offer.Name,
+		},
+		orderAmount,
+		offer.Price.Currency,
+		promoInfo,
+	)
+
+	if err := s.repo.Create(ctx, *order); err != nil {
 		return 0, err
 	}
 
@@ -103,17 +100,10 @@ func (s *OrdersService) getOrderPromocode(ctx context.Context, schoolID, promoco
 			return promocode, err
 		}
 
-		if promocode.ExpiresAt.Unix() < time.Now().Unix() {
+		if promocode.IsExpired() {
 			return promocode, domain.ErrPromocodeExpired
 		}
 	}
 
 	return promocode, nil
-}
-
-func (s *OrdersService) calculateOrderPrice(price uint, promocode domain.PromoCode) uint {
-	if promocode.ID == 0 {
-		return price
-	}
-	return (price * uint(100-promocode.DiscountPercentage)) / 100
 }

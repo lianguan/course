@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"io"
+	"time"
+)
 
 type (
 	FileStatus int
@@ -32,4 +35,14 @@ type File struct {
 	Status          FileStatus `gorm:"not null;default:0;index" json:"status"`          // 上传状态
 	UploadStartedAt time.Time  `gorm:"not null" json:"uploadStartedAt"`                 // 上传开始时间
 	URL             string     `gorm:"size:500" json:"url"`                             // 文件访问URL
+}
+
+// UploadInput 文件上传输入（Service 层使用）
+type UploadInput struct {
+	File        io.Reader
+	Filename    string
+	Size        int64
+	ContentType string
+	SchoolID    uint
+	Type        FileType
 }

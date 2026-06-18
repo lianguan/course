@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +36,7 @@ func (h *Handler) adminSignIn(c *gin.Context) {
 		return
 	}
 
-	res, err := h.services.Admins.SignIn(c.Request.Context(), service.SchoolSignInInput{
+	res, err := h.services.Admins.SignIn(c.Request.Context(), domain.SchoolSignInInput{
 		Email:    inp.Email,
 		Password: inp.Password,
 		SchoolID: school.ID,

@@ -23,7 +23,7 @@ func init() {
 }
 
 func TestHandler_adminCreateOffer(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockOffers, input service.CreateOfferInput)
+	type mockBehavior func(r *mock_service.MockOffers, input domain.CreateOfferInput)
 
 	school := domain.School{ID: 1}
 
@@ -31,7 +31,7 @@ func TestHandler_adminCreateOffer(t *testing.T) {
 		name         string
 		body         string
 		school       domain.School
-		input        service.CreateOfferInput
+		input        domain.CreateOfferInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -40,7 +40,7 @@ func TestHandler_adminCreateOffer(t *testing.T) {
 			name:   "ok",
 			body:   `{"name":"Test Offer","description":"Test","benefits":["b1"],"packages":[1],"price":{"value":100,"currency":"USD"},"paymentMethod":{"usesProvider":false}}`,
 			school: school,
-			input: service.CreateOfferInput{
+			input: domain.CreateOfferInput{
 				SchoolID:    school.ID,
 				Name:        "Test Offer",
 				Description: "Test",
@@ -51,7 +51,7 @@ func TestHandler_adminCreateOffer(t *testing.T) {
 				},
 				Packages: []uint{1},
 			},
-			mockBehavior: func(r *mock_service.MockOffers, input service.CreateOfferInput) {
+			mockBehavior: func(r *mock_service.MockOffers, input domain.CreateOfferInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(1), nil)
 			},
 			statusCode:   201,
@@ -61,7 +61,7 @@ func TestHandler_adminCreateOffer(t *testing.T) {
 			name:         "invalid input",
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockOffers, input service.CreateOfferInput) {},
+			mockBehavior: func(r *mock_service.MockOffers, input domain.CreateOfferInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -69,7 +69,7 @@ func TestHandler_adminCreateOffer(t *testing.T) {
 			name:   "service error",
 			body:   `{"name":"Test Offer","description":"Test","benefits":["b1"],"packages":[1],"price":{"value":100,"currency":"USD"},"paymentMethod":{"usesProvider":false}}`,
 			school: school,
-			input: service.CreateOfferInput{
+			input: domain.CreateOfferInput{
 				SchoolID:    school.ID,
 				Name:        "Test Offer",
 				Description: "Test",
@@ -80,7 +80,7 @@ func TestHandler_adminCreateOffer(t *testing.T) {
 				},
 				Packages: []uint{1},
 			},
-			mockBehavior: func(r *mock_service.MockOffers, input service.CreateOfferInput) {
+			mockBehavior: func(r *mock_service.MockOffers, input domain.CreateOfferInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(0), errors.New("service error"))
 			},
 			statusCode:   500,
@@ -249,7 +249,7 @@ func TestHandler_adminGetOfferById(t *testing.T) {
 }
 
 func TestHandler_adminUpdateOffer(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockOffers, input service.UpdateOfferInput)
+	type mockBehavior func(r *mock_service.MockOffers, input domain.UpdateOfferInput)
 
 	school := domain.School{ID: 1}
 
@@ -258,7 +258,7 @@ func TestHandler_adminUpdateOffer(t *testing.T) {
 		offerId      uint
 		body         string
 		school       domain.School
-		input        service.UpdateOfferInput
+		input        domain.UpdateOfferInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -268,13 +268,13 @@ func TestHandler_adminUpdateOffer(t *testing.T) {
 			offerId: 1,
 			body:    `{"name":"Updated Offer","description":"Updated"}`,
 			school:  school,
-			input: service.UpdateOfferInput{
+			input: domain.UpdateOfferInput{
 				ID:          1,
 				SchoolID:    school.ID,
 				Name:        "Updated Offer",
 				Description: "Updated",
 			},
-			mockBehavior: func(r *mock_service.MockOffers, input service.UpdateOfferInput) {
+			mockBehavior: func(r *mock_service.MockOffers, input domain.UpdateOfferInput) {
 				r.EXPECT().Update(context.Background(), input).Return(nil)
 			},
 			statusCode:   200,
@@ -285,7 +285,7 @@ func TestHandler_adminUpdateOffer(t *testing.T) {
 			offerId:      1,
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockOffers, input service.UpdateOfferInput) {},
+			mockBehavior: func(r *mock_service.MockOffers, input domain.UpdateOfferInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -294,13 +294,13 @@ func TestHandler_adminUpdateOffer(t *testing.T) {
 			offerId: 1,
 			body:    `{"name":"Updated Offer","description":"Updated"}`,
 			school:  school,
-			input: service.UpdateOfferInput{
+			input: domain.UpdateOfferInput{
 				ID:          1,
 				SchoolID:    school.ID,
 				Name:        "Updated Offer",
 				Description: "Updated",
 			},
-			mockBehavior: func(r *mock_service.MockOffers, input service.UpdateOfferInput) {
+			mockBehavior: func(r *mock_service.MockOffers, input domain.UpdateOfferInput) {
 				r.EXPECT().Update(context.Background(), input).Return(errors.New("service error"))
 			},
 			statusCode:   500,

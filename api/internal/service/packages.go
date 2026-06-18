@@ -4,19 +4,18 @@ import (
 	"context"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 )
 
 type PackagesService struct {
-	repo        repository.Packages
-	modulesRepo repository.Modules
+	repo        PackagesRepository
+	modulesRepo ModulesRepository
 }
 
-func NewPackagesService(repo repository.Packages, modulesRepo repository.Modules) *PackagesService {
+func NewPackagesService(repo PackagesRepository, modulesRepo ModulesRepository) *PackagesService {
 	return &PackagesService{repo: repo, modulesRepo: modulesRepo}
 }
 
-func (s *PackagesService) Create(ctx context.Context, inp CreatePackageInput) (uint, error) {
+func (s *PackagesService) Create(ctx context.Context, inp domain.CreatePackageInput) (uint, error) {
 	id, err := s.repo.Create(ctx, domain.Package{
 		CourseID: inp.CourseID,
 		SchoolID: inp.SchoolID,
@@ -78,13 +77,9 @@ func (s *PackagesService) GetByIds(ctx context.Context, ids []uint) ([]domain.Pa
 	return s.repo.GetByIDs(ctx, ids)
 }
 
-func (s *PackagesService) Update(ctx context.Context, inp UpdatePackageInput) error {
+func (s *PackagesService) Update(ctx context.Context, inp domain.UpdatePackageInput) error {
 	if inp.Name != "" {
-		if err := s.repo.Update(ctx, repository.UpdatePackageInput{
-			ID:       inp.ID,
-			SchoolID: inp.SchoolID,
-			Name:     inp.Name,
-		}); err != nil {
+		if err := s.repo.Update(ctx, inp); err != nil {
 			return err
 		}
 	}

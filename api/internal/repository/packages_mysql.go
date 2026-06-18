@@ -42,7 +42,7 @@ func (r *PackagesRepo) GetByIDs(ctx context.Context, ids []uint) ([]domain.Packa
 	return packages, err
 }
 
-func (r *PackagesRepo) Update(ctx context.Context, inp UpdatePackageInput) error {
+func (r *PackagesRepo) Update(ctx context.Context, inp domain.UpdatePackageInput) error {
 	updates := map[string]interface{}{}
 
 	if inp.Name != "" {

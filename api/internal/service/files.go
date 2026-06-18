@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 	"ultrathreads/pkg/logger"
 	"ultrathreads/pkg/storage"
 	"gorm.io/gorm"
@@ -28,12 +27,12 @@ var folders = map[domain.FileType]string{
 }
 
 type FilesService struct {
-	repo    repository.Files
+	repo    FilesRepository
 	storage storage.Provider
 	env     string
 }
 
-func NewFilesService(repo repository.Files, storage storage.Provider, env string) *FilesService {
+func NewFilesService(repo FilesRepository, storage storage.Provider, env string) *FilesService {
 	return &FilesService{repo: repo, storage: storage, env: env}
 }
 

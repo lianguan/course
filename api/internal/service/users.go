@@ -7,14 +7,13 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 	"ultrathreads/pkg/auth"
 	"ultrathreads/pkg/hash"
 	"ultrathreads/pkg/otp"
 )
 
 type UsersService struct {
-	repo         repository.Users
+	repo         UsersRepository
 	hasher       hash.PasswordHasher
 	tokenManager auth.TokenManager
 	otpGenerator otp.Generator
@@ -29,7 +28,7 @@ type UsersService struct {
 	domain string
 }
 
-func NewUsersService(repo repository.Users, hasher hash.PasswordHasher, tokenManager auth.TokenManager,
+func NewUsersService(repo UsersRepository, hasher hash.PasswordHasher, tokenManager auth.TokenManager,
 	emailService Emails, schoolsService Schools, accessTTL, refreshTTL time.Duration, otpGenerator otp.Generator,
 	verificationCodeLength int, domain string) *UsersService {
 	return &UsersService{
@@ -46,7 +45,7 @@ func NewUsersService(repo repository.Users, hasher hash.PasswordHasher, tokenMan
 	}
 }
 
-func (s *UsersService) SignUp(ctx context.Context, input UserSignUpInput) error {
+func (s *UsersService) SignUp(ctx context.Context, input domain.UserSignUpInput) error {
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
 		return err
@@ -74,35 +73,35 @@ func (s *UsersService) SignUp(ctx context.Context, input UserSignUpInput) error 
 		return err
 	}
 
-	return s.emailService.SendUserVerificationEmail(VerificationEmailInput{
+	return s.emailService.SendUserVerificationEmail(domain.VerificationEmailInput{
 		Email:            user.Email,
 		Name:             user.Name,
 		VerificationCode: verificationCode,
 	})
 }
 
-func (s *UsersService) SignIn(ctx context.Context, input UserSignInInput) (Tokens, error) {
+func (s *UsersService) SignIn(ctx context.Context, input domain.UserSignInInput) (domain.Tokens, error) {
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
 	user, err := s.repo.GetByCredentials(ctx, input.Email, passwordHash)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return Tokens{}, err
+			return domain.Tokens{}, err
 		}
 
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
 	return s.createSession(ctx, user.ID)
 }
 
-func (s *UsersService) RefreshTokens(ctx context.Context, refreshToken string) (Tokens, error) {
+func (s *UsersService) RefreshTokens(ctx context.Context, refreshToken string) (domain.Tokens, error) {
 	student, err := s.repo.GetByRefreshToken(ctx, refreshToken)
 	if err != nil {
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
 	return s.createSession(ctx, student.ID)
@@ -133,9 +132,9 @@ func (s *UsersService) CreateSchool(ctx context.Context, userID uint, schoolName
 	return domain.School{ID: schoolID, Settings: domain.Settings{Domains: []string{schoolDomain}}}, nil
 }
 
-func (s *UsersService) createSession(ctx context.Context, userID uint) (Tokens, error) {
+func (s *UsersService) createSession(ctx context.Context, userID uint) (domain.Tokens, error) {
 	var (
-		res Tokens
+		res domain.Tokens
 		err error
 	)
 

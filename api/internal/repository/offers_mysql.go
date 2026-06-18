@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"ultrathreads/internal/domain"
+
 	"gorm.io/gorm"
 )
 
@@ -43,26 +44,11 @@ func (r *OffersRepo) GetByID(ctx context.Context, id uint) (domain.Offer, error)
 
 func (r *OffersRepo) GetByPackages(ctx context.Context, packageIDs []uint) ([]domain.Offer, error) {
 	var offers []domain.Offer
-	// PackageIDs is stored as JSON array, need to search in application code
-	// For production, consider a separate offer_packages table
-	err := r.db.WithContext(ctx).Find(&offers).Error
-	if err != nil {
-		return nil, err
-	}
-
-	// Filter in memory
-	var result []domain.Offer
-	for _, offer := range offers {
-		for _, pkgID := range offer.PackageIDs {
-			for _, searchID := range packageIDs {
-				if pkgID == searchID {
-					result = append(result, offer)
-					break
-				}
-			}
-		}
-	}
-	return result, nil
+	// 使用 MySQL JSON 函数查询包含指定套餐ID的优惠
+	err := r.db.WithContext(ctx).
+		Where("JSON_CONTAINS(package_ids, ?)", packageIDs).
+		Find(&offers).Error
+	return offers, err
 }
 
 func (r *OffersRepo) GetByIDs(ctx context.Context, ids []uint) ([]domain.Offer, error) {
@@ -73,7 +59,7 @@ func (r *OffersRepo) GetByIDs(ctx context.Context, ids []uint) ([]domain.Offer, 
 	return offers, err
 }
 
-func (r *OffersRepo) Update(ctx context.Context, inp UpdateOfferInput) error {
+func (r *OffersRepo) Update(ctx context.Context, inp domain.UpdateOfferInput) error {
 	updates := map[string]interface{}{}
 
 	if inp.Name != "" {

@@ -121,7 +121,7 @@ func (s *PaymentsService) processFondyCallback(ctx context.Context, callback fon
 		return err
 	}
 
-	if err := s.emailService.SendStudentPurchaseSuccessfulEmail(StudentPurchaseSuccessfulEmailInput{
+	if err := s.emailService.SendStudentPurchaseSuccessfulEmail(domain.StudentPurchaseSuccessfulEmailInput{
 		Name:       order.Student.Name,
 		Email:      order.Student.Email,
 		CourseName: order.Offer.Name,

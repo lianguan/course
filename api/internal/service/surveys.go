@@ -5,20 +5,19 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 )
 
 type SurveysService struct {
-	modulesRepo       repository.Modules
-	surveyResultsRepo repository.SurveyResults
-	studentsRepo      repository.Students
+	modulesRepo       ModulesRepository
+	surveyResultsRepo SurveyResultsRepository
+	studentsRepo      StudentsRepository
 }
 
-func NewSurveysService(modulesRepo repository.Modules, surveyResultsRepo repository.SurveyResults, studentsRepo repository.Students) *SurveysService {
+func NewSurveysService(modulesRepo ModulesRepository, surveyResultsRepo SurveyResultsRepository, studentsRepo StudentsRepository) *SurveysService {
 	return &SurveysService{modulesRepo: modulesRepo, surveyResultsRepo: surveyResultsRepo, studentsRepo: studentsRepo}
 }
 
-func (s *SurveysService) Create(ctx context.Context, inp CreateSurveyInput) error {
+func (s *SurveysService) Create(ctx context.Context, inp domain.CreateSurveyInput) error {
 	for i := range inp.Survey.Questions {
 		inp.Survey.Questions[i].ID = uint(i + 1)
 	}
@@ -30,7 +29,7 @@ func (s *SurveysService) Delete(ctx context.Context, schoolID, moduleID uint) er
 	return s.modulesRepo.DetachSurvey(ctx, schoolID, moduleID)
 }
 
-func (s *SurveysService) SaveStudentAnswers(ctx context.Context, inp SaveStudentAnswersInput) error {
+func (s *SurveysService) SaveStudentAnswers(ctx context.Context, inp domain.SaveStudentAnswersInput) error {
 	student, err := s.studentsRepo.GetById(ctx, inp.SchoolID, inp.StudentID)
 	if err != nil {
 		return err

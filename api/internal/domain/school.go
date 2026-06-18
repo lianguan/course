@@ -8,14 +8,14 @@ import (
 var ErrFondyIsNotConnected = errors.New("fondy is not connected")
 
 type School struct {
-	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`  // 学校ID
-	Name         string    `gorm:"size:255;not null" json:"name"`       // 学校名称
-	Subtitle     string    `gorm:"size:255" json:"subtitle"`            // 副标题
-	Description  string    `gorm:"type:text" json:"description"`        // 描述
-	RegisteredAt time.Time `gorm:"not null" json:"registeredAt"`        // 注册时间
-	Admins       []Admin   `gorm:"-" json:"admins,omitempty"`           // 管理员列表
-	Courses      []Course  `gorm:"-" json:"courses,omitempty"`          // 课程列表
-	Settings     Settings  `gorm:"serializer:json" json:"settings"`     // 学校设置
+	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"` // 学校ID
+	Name         string    `gorm:"size:255;not null" json:"name"`      // 学校名称
+	Subtitle     string    `gorm:"size:255" json:"subtitle"`           // 副标题
+	Description  string    `gorm:"type:text" json:"description"`       // 描述
+	RegisteredAt time.Time `gorm:"not null" json:"registeredAt"`       // 注册时间
+	Admins       []Admin   `gorm:"-" json:"admins,omitempty"`          // 管理员列表
+	Courses      []Course  `gorm:"-" json:"courses,omitempty"`         // 课程列表
+	Settings     Settings  `gorm:"serializer:json" json:"settings"`    // 学校设置
 }
 
 type Settings struct {
@@ -66,11 +66,11 @@ type Pages struct {
 }
 
 type Admin struct {
-	ID       uint    `gorm:"primaryKey;autoIncrement" json:"id"`  // 管理员ID
-	Name     string  `gorm:"size:255;not null" json:"name"`       // 管理员姓名
-	Email    string  `gorm:"size:255;not null;uniqueIndex" json:"email"` // 邮箱
-	Password string  `gorm:"size:255;not null" json:"password"`   // 密码
-	SchoolID uint    `gorm:"not null;index" json:"schoolId"`      // 所属学校ID
+	ID       uint    `gorm:"primaryKey;autoIncrement" json:"id"`              // 管理员ID
+	Name     string  `gorm:"size:255;not null" json:"name"`                   // 管理员姓名
+	Email    string  `gorm:"size:255;not null;uniqueIndex" json:"email"`      // 邮箱
+	Password string  `gorm:"size:255;not null" json:"password"`               // 密码
+	SchoolID uint    `gorm:"not null;index" json:"schoolId"`                  // 所属学校ID
 	Session  Session `gorm:"embedded;embeddedPrefix:session_" json:"session"` // 会话信息
 }
 
@@ -99,4 +99,19 @@ type UpdateSchoolSettingsContactInfo struct {
 	Address            *string // 地址
 	Email              *string // 联系邮箱
 	Phone              *string // 联系电话
+}
+
+// ConnectFondyInput Fondy 支付连接输入（Service 层使用）
+type ConnectFondyInput struct {
+	SchoolID         uint
+	MerchantID       string
+	MerchantPassword string
+}
+
+// ConnectSendPulseInput SendPulse 邮件服务连接输入（Service 层使用）
+type ConnectSendPulseInput struct {
+	SchoolID uint
+	ID       string
+	Secret   string
+	ListID   string
 }

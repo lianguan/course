@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) initUsersRoutes(api *gin.RouterGroup) {
@@ -58,7 +58,7 @@ func (h *Handler) userSignUp(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Users.SignUp(c.Request.Context(), service.UserSignUpInput{
+	if err := h.services.Users.SignUp(c.Request.Context(), domain.UserSignUpInput{
 		Name:     inp.Name,
 		Email:    inp.Email,
 		Phone:    inp.Phone,
@@ -98,7 +98,7 @@ func (h *Handler) userSignIn(c *gin.Context) {
 		return
 	}
 
-	res, err := h.services.Users.SignIn(c.Request.Context(), service.UserSignInInput{
+	res, err := h.services.Users.SignIn(c.Request.Context(), domain.UserSignInInput{
 		Email:    inp.Email,
 		Password: inp.Password,
 	})

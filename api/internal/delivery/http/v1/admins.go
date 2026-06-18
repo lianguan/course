@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -168,7 +167,7 @@ func (h *Handler) adminCreateModule(c *gin.Context) {
 		return
 	}
 
-	moduleId, err := h.services.Modules.Create(c.Request.Context(), service.CreateModuleInput{
+	moduleId, err := h.services.Modules.Create(c.Request.Context(), domain.CreateModuleInput{
 		SchoolID: school.ID,
 		CourseID: uint(courseID),
 		Name:     inp.Name,
@@ -225,7 +224,7 @@ func (h *Handler) adminUpdateModule(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Modules.Update(c.Request.Context(), service.UpdateModuleInput{
+	if err := h.services.Modules.Update(c.Request.Context(), domain.UpdateModuleInput{
 		ID:        moduleID,
 		SchoolID:  school.ID,
 		Name:      inp.Name,
@@ -370,7 +369,7 @@ func (h *Handler) adminCreateLesson(c *gin.Context) {
 		return
 	}
 
-	lessonId, err := h.services.Lessons.Create(c.Request.Context(), service.AddLessonInput{
+	lessonId, err := h.services.Lessons.Create(c.Request.Context(), domain.AddLessonInput{
 		ModuleID: moduleID,
 		Name:     inp.Name,
 		Position: inp.Position,
@@ -458,8 +457,8 @@ func (h *Handler) adminUpdateLesson(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Lessons.Update(c.Request.Context(), service.UpdateLessonInput{
-		LessonID:  id,
+	if err := h.services.Lessons.Update(c.Request.Context(), domain.UpdateLessonInput{
+		ID:        id,
 		Name:      inp.Name,
 		Content:   inp.Content,
 		Position:  inp.Position,
@@ -553,7 +552,7 @@ func (h *Handler) adminCreatePackage(c *gin.Context) {
 		return
 	}
 
-	moduleId, err := h.services.Packages.Create(c.Request.Context(), service.CreatePackageInput{
+	moduleId, err := h.services.Packages.Create(c.Request.Context(), domain.CreatePackageInput{
 		SchoolID: school.ID,
 		CourseID: courseID,
 		Name:     inp.Name,
@@ -686,7 +685,7 @@ func (h *Handler) adminUpdatePackage(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Packages.Update(c.Request.Context(), service.UpdatePackageInput{
+	if err := h.services.Packages.Update(c.Request.Context(), domain.UpdatePackageInput{
 		ID:       id,
 		SchoolID: school.ID,
 		Name:     inp.Name,
@@ -780,7 +779,7 @@ func (h *Handler) adminCreateOffer(c *gin.Context) {
 		return
 	}
 
-	id, err := h.services.Offers.Create(c.Request.Context(), service.CreateOfferInput{
+	id, err := h.services.Offers.Create(c.Request.Context(), domain.CreateOfferInput{
 		SchoolID:    school.ID,
 		Name:        inp.Name,
 		Description: inp.Description,
@@ -958,7 +957,7 @@ func (h *Handler) adminUpdateOffer(c *gin.Context) {
 		return
 	}
 
-	updateInput := service.UpdateOfferInput{
+	updateInput := domain.UpdateOfferInput{
 		ID:          id,
 		SchoolID:    school.ID,
 		Name:        inp.Name,
@@ -1063,7 +1062,7 @@ func (h *Handler) adminCreatePromocode(c *gin.Context) {
 		return
 	}
 
-	id, err := h.services.PromoCodes.Create(c.Request.Context(), service.CreatePromoCodeInput{
+	id, err := h.services.PromoCodes.Create(c.Request.Context(), domain.CreatePromoCodeInput{
 		SchoolID:           school.ID,
 		Code:               inp.Code,
 		DiscountPercentage: inp.DiscountPercentage,
@@ -1428,7 +1427,7 @@ func (h *Handler) adminConnectFondy(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Schools.ConnectFondy(c.Request.Context(), service.ConnectFondyInput{
+	if err := h.services.Schools.ConnectFondy(c.Request.Context(), domain.ConnectFondyInput{
 		SchoolID:         school.ID,
 		MerchantID:       inp.MerchantID,
 		MerchantPassword: inp.MerchantPassword,
@@ -1475,7 +1474,7 @@ func (h *Handler) adminConnectSendPulse(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Schools.ConnectSendPulse(c.Request.Context(), service.ConnectSendPulseInput{
+	if err := h.services.Schools.ConnectSendPulse(c.Request.Context(), domain.ConnectSendPulseInput{
 		SchoolID: school.ID,
 		ID:       inp.ID,
 		Secret:   inp.Secret,

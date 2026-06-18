@@ -23,12 +23,12 @@ func init() {
 }
 
 func TestHandler_userSignUp(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockUsers, input service.UserSignUpInput)
+	type mockBehavior func(r *mock_service.MockUsers, input domain.UserSignUpInput)
 
 	tests := []struct {
 		name         string
 		body         string
-		input        service.UserSignUpInput
+		input        domain.UserSignUpInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -36,13 +36,13 @@ func TestHandler_userSignUp(t *testing.T) {
 		{
 			name: "ok",
 			body: `{"name":"John Doe","email":"john@example.com","phone":"+1234567890","password":"password123"}`,
-			input: service.UserSignUpInput{
+			input: domain.UserSignUpInput{
 				Name:     "John Doe",
 				Email:    "john@example.com",
 				Phone:    "+1234567890",
 				Password: "password123",
 			},
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignUpInput) {
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignUpInput) {
 				r.EXPECT().SignUp(context.Background(), input).Return(nil)
 			},
 			statusCode:   201,
@@ -51,20 +51,20 @@ func TestHandler_userSignUp(t *testing.T) {
 		{
 			name:         "invalid input body",
 			body:         `{wrong}`,
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignUpInput) {},
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignUpInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
 		{
 			name: "user already exists",
 			body: `{"name":"John Doe","email":"john@example.com","phone":"+1234567890","password":"password123"}`,
-			input: service.UserSignUpInput{
+			input: domain.UserSignUpInput{
 				Name:     "John Doe",
 				Email:    "john@example.com",
 				Phone:    "+1234567890",
 				Password: "password123",
 			},
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignUpInput) {
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignUpInput) {
 				r.EXPECT().SignUp(context.Background(), input).Return(domain.ErrUserAlreadyExists)
 			},
 			statusCode:   400,
@@ -73,13 +73,13 @@ func TestHandler_userSignUp(t *testing.T) {
 		{
 			name: "service error",
 			body: `{"name":"John Doe","email":"john@example.com","phone":"+1234567890","password":"password123"}`,
-			input: service.UserSignUpInput{
+			input: domain.UserSignUpInput{
 				Name:     "John Doe",
 				Email:    "john@example.com",
 				Phone:    "+1234567890",
 				Password: "password123",
 			},
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignUpInput) {
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignUpInput) {
 				r.EXPECT().SignUp(context.Background(), input).Return(errors.New("service error"))
 			},
 			statusCode:   500,
@@ -114,12 +114,12 @@ func TestHandler_userSignUp(t *testing.T) {
 }
 
 func TestHandler_userSignIn(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockUsers, input service.UserSignInInput)
+	type mockBehavior func(r *mock_service.MockUsers, input domain.UserSignInInput)
 
 	tests := []struct {
 		name         string
 		body         string
-		input        service.UserSignInInput
+		input        domain.UserSignInInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -127,12 +127,12 @@ func TestHandler_userSignIn(t *testing.T) {
 		{
 			name: "ok",
 			body: `{"email":"john@example.com","password":"password123"}`,
-			input: service.UserSignInInput{
+			input: domain.UserSignInInput{
 				Email:    "john@example.com",
 				Password: "password123",
 			},
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignInInput) {
-				r.EXPECT().SignIn(context.Background(), input).Return(service.Tokens{
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignInInput) {
+				r.EXPECT().SignIn(context.Background(), input).Return(domain.Tokens{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh-token",
 				}, nil)
@@ -143,19 +143,19 @@ func TestHandler_userSignIn(t *testing.T) {
 		{
 			name:         "invalid input body",
 			body:         `{wrong}`,
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignInInput) {},
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignInInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
 		{
 			name: "user not found",
 			body: `{"email":"john@example.com","password":"password123"}`,
-			input: service.UserSignInInput{
+			input: domain.UserSignInInput{
 				Email:    "john@example.com",
 				Password: "password123",
 			},
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignInInput) {
-				r.EXPECT().SignIn(context.Background(), input).Return(service.Tokens{}, domain.ErrUserNotFound)
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignInInput) {
+				r.EXPECT().SignIn(context.Background(), input).Return(domain.Tokens{}, domain.ErrUserNotFound)
 			},
 			statusCode:   400,
 			responseBody: `{"message":"user doesn't exists"}`,
@@ -163,12 +163,12 @@ func TestHandler_userSignIn(t *testing.T) {
 		{
 			name: "service error",
 			body: `{"email":"john@example.com","password":"password123"}`,
-			input: service.UserSignInInput{
+			input: domain.UserSignInInput{
 				Email:    "john@example.com",
 				Password: "password123",
 			},
-			mockBehavior: func(r *mock_service.MockUsers, input service.UserSignInInput) {
-				r.EXPECT().SignIn(context.Background(), input).Return(service.Tokens{}, errors.New("service error"))
+			mockBehavior: func(r *mock_service.MockUsers, input domain.UserSignInInput) {
+				r.EXPECT().SignIn(context.Background(), input).Return(domain.Tokens{}, errors.New("service error"))
 			},
 			statusCode:   500,
 			responseBody: `{"message":"service error"}`,
@@ -217,7 +217,7 @@ func TestHandler_userRefresh(t *testing.T) {
 			body:  `{"token":"refresh-token"}`,
 			token: "refresh-token",
 			mockBehavior: func(r *mock_service.MockUsers, token string) {
-				r.EXPECT().RefreshTokens(context.Background(), token).Return(service.Tokens{
+				r.EXPECT().RefreshTokens(context.Background(), token).Return(domain.Tokens{
 					AccessToken:  "new-access-token",
 					RefreshToken: "new-refresh-token",
 				}, nil)
@@ -237,7 +237,7 @@ func TestHandler_userRefresh(t *testing.T) {
 			body:  `{"token":"refresh-token"}`,
 			token: "refresh-token",
 			mockBehavior: func(r *mock_service.MockUsers, token string) {
-				r.EXPECT().RefreshTokens(context.Background(), token).Return(service.Tokens{}, errors.New("service error"))
+				r.EXPECT().RefreshTokens(context.Background(), token).Return(domain.Tokens{}, errors.New("service error"))
 			},
 			statusCode:   500,
 			responseBody: `{"message":"service error"}`,

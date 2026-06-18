@@ -5,18 +5,17 @@ import (
 	"errors"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 )
 
 type PromoCodeService struct {
-	repo repository.PromoCodes
+	repo PromoCodesRepository
 }
 
-func NewPromoCodeService(repo repository.PromoCodes) *PromoCodeService {
+func NewPromoCodeService(repo PromoCodesRepository) *PromoCodeService {
 	return &PromoCodeService{repo: repo}
 }
 
-func (s *PromoCodeService) Create(ctx context.Context, inp CreatePromoCodeInput) (uint, error) {
+func (s *PromoCodeService) Create(ctx context.Context, inp domain.CreatePromoCodeInput) (uint, error) {
 	return s.repo.Create(ctx, domain.PromoCode{
 		SchoolID:           inp.SchoolID,
 		Code:               inp.Code,

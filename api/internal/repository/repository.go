@@ -53,36 +53,10 @@ type Admins interface {
 	GetById(ctx context.Context, id uint) (domain.Admin, error)
 }
 
-type UpdateCourseInput struct {
-	ID          uint
-	SchoolID    uint
-	Name        *string
-	ImageURL    *string
-	Description *string
-	Color       *string
-	Published   *bool
-}
-
 type Courses interface {
 	Create(ctx context.Context, schoolID uint, course domain.Course) (uint, error)
-	Update(ctx context.Context, inp UpdateCourseInput) error
+	Update(ctx context.Context, inp domain.UpdateCourseInput) error
 	Delete(ctx context.Context, schoolID, courseID uint) error
-}
-
-type UpdateModuleInput struct {
-	ID        uint
-	SchoolID  uint
-	Name      string
-	Position  *uint
-	Published *bool
-}
-
-type UpdateLessonInput struct {
-	ID        uint
-	SchoolID  uint
-	Name      string
-	Position  *uint
-	Published *bool
 }
 
 type Modules interface {
@@ -92,12 +66,12 @@ type Modules interface {
 	GetPublishedByID(ctx context.Context, moduleID uint) (domain.Module, error)
 	GetByID(ctx context.Context, moduleID uint) (domain.Module, error)
 	GetByPackages(ctx context.Context, packageIDs []uint) ([]domain.Module, error)
-	Update(ctx context.Context, inp UpdateModuleInput) error
+	Update(ctx context.Context, inp domain.UpdateModuleInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	DeleteByCourse(ctx context.Context, schoolID, courseID uint) error
 	AddLesson(ctx context.Context, schoolID, id uint, lesson domain.Lesson) error
 	GetByLesson(ctx context.Context, lessonID uint) (domain.Module, error)
-	UpdateLesson(ctx context.Context, inp UpdateLessonInput) error
+	UpdateLesson(ctx context.Context, inp domain.UpdateLessonInput) error
 	DeleteLesson(ctx context.Context, schoolID, id uint) error
 	DetachPackageFromAll(ctx context.Context, schoolID, packageID uint) error
 	AttachPackage(ctx context.Context, schoolID, packageID uint, modules []uint) error
@@ -112,35 +86,18 @@ type LessonContent interface {
 	DeleteContent(ctx context.Context, schoolID uint, lessonIDs []uint) error
 }
 
-type UpdatePackageInput struct {
-	ID       uint
-	SchoolID uint
-	Name     string
-}
-
 type Packages interface {
 	Create(ctx context.Context, pkg domain.Package) (uint, error)
-	Update(ctx context.Context, inp UpdatePackageInput) error
+	Update(ctx context.Context, inp domain.UpdatePackageInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	GetByCourse(ctx context.Context, courseID uint) ([]domain.Package, error)
 	GetByID(ctx context.Context, id uint) (domain.Package, error)
 	GetByIDs(ctx context.Context, ids []uint) ([]domain.Package, error)
 }
 
-type UpdateOfferInput struct {
-	ID            uint
-	SchoolID      uint
-	Name          string
-	Description   string
-	Benefits      []string
-	Price         *domain.Price
-	Packages      []uint
-	PaymentMethod *domain.PaymentMethod
-}
-
 type Offers interface {
 	Create(ctx context.Context, offer domain.Offer) (uint, error)
-	Update(ctx context.Context, inp UpdateOfferInput) error
+	Update(ctx context.Context, inp domain.UpdateOfferInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	GetBySchool(ctx context.Context, schoolID uint) ([]domain.Offer, error)
 	GetByID(ctx context.Context, id uint) (domain.Offer, error)

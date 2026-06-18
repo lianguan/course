@@ -28,21 +28,12 @@ func (r *SchoolsRepo) Create(ctx context.Context, name string) (uint, error) {
 
 func (r *SchoolsRepo) GetByDomain(ctx context.Context, domainName string) (domain.School, error) {
 	var school domain.School
-	err := r.db.WithContext(ctx).First(&school).Error
+	// 使用 MySQL JSON 函数直接在数据库层搜索域名
+	err := r.db.WithContext(ctx).
+		Where("JSON_CONTAINS(settings->'$.domains', ?)", `"`+domainName+`"`).
+		First(&school).Error
 	if err != nil {
 		return domain.School{}, err
-	}
-
-	// 检查域名是否在学校的域名列表中
-	found := false
-	for _, d := range school.Settings.Domains {
-		if d == domainName {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return domain.School{}, gorm.ErrRecordNotFound
 	}
 
 	// Load courses for this school

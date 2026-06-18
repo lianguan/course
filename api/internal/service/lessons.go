@@ -5,27 +5,22 @@ import (
 	"errors"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 	"gorm.io/gorm"
 )
 
 type LessonsService struct {
-	repo        repository.Modules
-	contentRepo repository.LessonContent
+	repo        ModulesRepository
+	contentRepo LessonContentRepository
 }
 
-func NewLessonsService(repo repository.Modules, contentRepo repository.LessonContent) *LessonsService {
+func NewLessonsService(repo ModulesRepository, contentRepo LessonContentRepository) *LessonsService {
 	return &LessonsService{repo: repo, contentRepo: contentRepo}
 }
 
-func (s *LessonsService) Create(ctx context.Context, inp AddLessonInput) (uint, error) {
-	lesson := domain.Lesson{
-		SchoolID: inp.SchoolID,
-		Name:     inp.Name,
-		Position: inp.Position,
-	}
+func (s *LessonsService) Create(ctx context.Context, inp domain.AddLessonInput) (uint, error) {
+	lesson := domain.NewLesson(inp.Name, inp.Position, inp.SchoolID)
 
-	if err := s.repo.AddLesson(ctx, inp.SchoolID, inp.ModuleID, lesson); err != nil {
+	if err := s.repo.AddLesson(ctx, inp.SchoolID, inp.ModuleID, *lesson); err != nil {
 		return 0, err
 	}
 
@@ -60,10 +55,10 @@ func (s *LessonsService) GetById(ctx context.Context, lessonID uint) (domain.Les
 	return lesson, nil
 }
 
-func (s *LessonsService) Update(ctx context.Context, inp UpdateLessonInput) error {
+func (s *LessonsService) Update(ctx context.Context, inp domain.UpdateLessonInput) error {
 	if inp.Name != "" || inp.Position != nil || inp.Published != nil {
-		if err := s.repo.UpdateLesson(ctx, repository.UpdateLessonInput{
-			ID:        inp.LessonID,
+		if err := s.repo.UpdateLesson(ctx, domain.UpdateLessonInput{
+			ID:        inp.ID,
 			Name:      inp.Name,
 			Position:  inp.Position,
 			Published: inp.Published,
@@ -74,7 +69,7 @@ func (s *LessonsService) Update(ctx context.Context, inp UpdateLessonInput) erro
 	}
 
 	if inp.Content != "" {
-		if err := s.contentRepo.Update(ctx, inp.SchoolID, inp.LessonID, inp.Content); err != nil {
+		if err := s.contentRepo.Update(ctx, inp.SchoolID, inp.ID, inp.Content); err != nil {
 			return err
 		}
 	}

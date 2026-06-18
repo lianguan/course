@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -191,8 +190,8 @@ func (h *Handler) adminUpdateCourse(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Courses.Update(c.Request.Context(), service.UpdateCourseInput{
-		CourseID:    uint(courseID),
+	if err := h.services.Courses.Update(c.Request.Context(), domain.UpdateCourseInput{
+		ID:          uint(courseID),
 		SchoolID:    school.ID,
 		Name:        inp.Name,
 		Description: inp.Description,

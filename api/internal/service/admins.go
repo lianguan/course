@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 	"ultrathreads/pkg/auth"
 	"ultrathreads/pkg/hash"
 )
@@ -16,16 +15,16 @@ type AdminsService struct {
 	hasher       hash.PasswordHasher
 	tokenManager auth.TokenManager
 
-	repo        repository.Admins
-	schoolRepo  repository.Schools
-	studentRepo repository.Students
+	repo        AdminsRepository
+	schoolRepo  SchoolsRepository
+	studentRepo StudentsRepository
 
 	accessTokenTTL  time.Duration
 	refreshTokenTTL time.Duration
 }
 
 func NewAdminsService(hasher hash.PasswordHasher, tokenManager auth.TokenManager,
-	repo repository.Admins, schoolRepo repository.Schools, studentRepo repository.Students,
+	repo AdminsRepository, schoolRepo SchoolsRepository, studentRepo StudentsRepository,
 	accessTokenTTL time.Duration, refreshTokenTTL time.Duration) *AdminsService {
 	return &AdminsService{
 		hasher:          hasher,
@@ -38,24 +37,24 @@ func NewAdminsService(hasher hash.PasswordHasher, tokenManager auth.TokenManager
 	}
 }
 
-func (s *AdminsService) SignIn(ctx context.Context, input SchoolSignInInput) (Tokens, error) {
+func (s *AdminsService) SignIn(ctx context.Context, input domain.SchoolSignInInput) (domain.Tokens, error) {
 	password, err := s.hasher.Hash(input.Password)
 	if err != nil {
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
 	admin, err := s.repo.GetByCredentials(ctx, input.SchoolID, input.Email, password)
 	if err != nil {
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
 	return s.createSession(ctx, admin.ID)
 }
 
-func (s *AdminsService) RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (Tokens, error) {
+func (s *AdminsService) RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (domain.Tokens, error) {
 	admin, err := s.repo.GetByRefreshToken(ctx, schoolID, refreshToken)
 	if err != nil {
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
 	return s.createSession(ctx, admin.ID)
@@ -118,9 +117,9 @@ func (s *AdminsService) DeleteStudent(ctx context.Context, schoolID, studentID u
 	return s.studentRepo.Delete(ctx, schoolID, studentID)
 }
 
-func (s *AdminsService) createSession(ctx context.Context, adminID uint) (Tokens, error) {
+func (s *AdminsService) createSession(ctx context.Context, adminID uint) (domain.Tokens, error) {
 	var (
-		res Tokens
+		res domain.Tokens
 		err error
 	)
 

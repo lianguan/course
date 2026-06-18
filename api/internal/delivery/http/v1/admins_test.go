@@ -114,7 +114,7 @@ func TestHandler_adminUpdateSchoolSettings(t *testing.T) {
 }
 
 func TestHandler_adminCreatePromocode(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockPromoCodes, input service.CreatePromoCodeInput)
+	type mockBehavior func(r *mock_service.MockPromoCodes, input domain.CreatePromoCodeInput)
 
 	promocodeID := uint(1)
 	offerId := uint(1)
@@ -130,7 +130,7 @@ func TestHandler_adminCreatePromocode(t *testing.T) {
 		name         string
 		body         string
 		school       domain.School
-		input        service.CreatePromoCodeInput
+		input        domain.CreatePromoCodeInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -139,14 +139,14 @@ func TestHandler_adminCreatePromocode(t *testing.T) {
 			name:   "ok",
 			body:   `{"code": "TESTPROMO", "discountPercentage": 15, "expiresAt": "2022-12-10T13:49:51.0Z", "offerIds": [1]}`,
 			school: school,
-			input: service.CreatePromoCodeInput{
+			input: domain.CreatePromoCodeInput{
 				SchoolID:           school.ID,
 				Code:               "TESTPROMO",
 				DiscountPercentage: 15,
 				ExpiresAt:          time.Date(2022, 12, 10, 13, 49, 51, 0, time.UTC),
 				OfferIDs:           []uint{offerId},
 			},
-			mockBehavior: func(r *mock_service.MockPromoCodes, input service.CreatePromoCodeInput) {
+			mockBehavior: func(r *mock_service.MockPromoCodes, input domain.CreatePromoCodeInput) {
 				r.EXPECT().Create(context.Background(), input).Return(promocodeID, nil)
 			},
 			statusCode:   201,
@@ -156,7 +156,7 @@ func TestHandler_adminCreatePromocode(t *testing.T) {
 			name:         "invalid input body param",
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockPromoCodes, input service.CreatePromoCodeInput) {},
+			mockBehavior: func(r *mock_service.MockPromoCodes, input domain.CreatePromoCodeInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -164,14 +164,14 @@ func TestHandler_adminCreatePromocode(t *testing.T) {
 			name:   "service error",
 			body:   `{"code": "TESTPROMO", "discountPercentage": 15, "expiresAt": "2022-12-10T13:49:51.0Z", "offerIds": [1]}`,
 			school: school,
-			input: service.CreatePromoCodeInput{
+			input: domain.CreatePromoCodeInput{
 				SchoolID:           school.ID,
 				Code:               "TESTPROMO",
 				DiscountPercentage: 15,
 				ExpiresAt:          time.Date(2022, 12, 10, 13, 49, 51, 0, time.UTC),
 				OfferIDs:           []uint{offerId},
 			},
-			mockBehavior: func(r *mock_service.MockPromoCodes, input service.CreatePromoCodeInput) {
+			mockBehavior: func(r *mock_service.MockPromoCodes, input domain.CreatePromoCodeInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(0), errors.New("failed to create promocode"))
 			},
 			statusCode:   500,

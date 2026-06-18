@@ -2,18 +2,16 @@ package service
 
 import (
 	"context"
-	"sort"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 )
 
 type ModulesService struct {
-	repo        repository.Modules
-	contentRepo repository.LessonContent
+	repo        ModulesRepository
+	contentRepo LessonContentRepository
 }
 
-func NewModulesService(repo repository.Modules, contentRepo repository.LessonContent) *ModulesService {
+func NewModulesService(repo ModulesRepository, contentRepo LessonContentRepository) *ModulesService {
 	return &ModulesService{repo: repo, contentRepo: contentRepo}
 }
 
@@ -24,7 +22,7 @@ func (s *ModulesService) GetPublishedByCourseId(ctx context.Context, courseID ui
 	}
 
 	for i := range modules {
-		sortLessons(modules[i].Lessons)
+		modules[i].SortLessons()
 	}
 
 	return modules, nil
@@ -37,7 +35,7 @@ func (s *ModulesService) GetByCourseId(ctx context.Context, courseID uint) ([]do
 	}
 
 	for i := range modules {
-		sortLessons(modules[i].Lessons)
+		modules[i].SortLessons()
 	}
 
 	return modules, nil
@@ -49,7 +47,7 @@ func (s *ModulesService) GetById(ctx context.Context, moduleID uint) (domain.Mod
 		return module, err
 	}
 
-	sortLessons(module.Lessons)
+	module.SortLessons()
 
 	return module, nil
 }
@@ -60,15 +58,9 @@ func (s *ModulesService) GetWithContent(ctx context.Context, moduleID uint) (dom
 		return module, err
 	}
 
-	lessonIDs := make([]uint, 0, len(module.Lessons))
-	publishedLessons := make([]domain.Lesson, 0)
-
-	for _, lesson := range module.Lessons {
-		if lesson.Published {
-			publishedLessons = append(publishedLessons, lesson)
-			lessonIDs = append(lessonIDs, lesson.ID)
-		}
-	}
+	// 使用 domain 方法获取已发布的课时ID
+	lessonIDs := module.GetPublishedLessonIDs()
+	publishedLessons := module.GetPublishedLessons()
 
 	module.Lessons = publishedLessons
 
@@ -85,7 +77,7 @@ func (s *ModulesService) GetWithContent(ctx context.Context, moduleID uint) (dom
 		}
 	}
 
-	sortLessons(module.Lessons)
+	module.SortLessons()
 
 	return module, nil
 }
@@ -97,7 +89,7 @@ func (s *ModulesService) GetByPackages(ctx context.Context, packageIDs []uint) (
 	}
 
 	for i := range modules {
-		sortLessons(modules[i].Lessons)
+		modules[i].SortLessons()
 	}
 
 	return modules, nil
@@ -107,27 +99,14 @@ func (s *ModulesService) GetByLesson(ctx context.Context, lessonID uint) (domain
 	return s.repo.GetByLesson(ctx, lessonID)
 }
 
-func (s *ModulesService) Create(ctx context.Context, inp CreateModuleInput) (uint, error) {
-	module := domain.Module{
-		Name:     inp.Name,
-		Position: inp.Position,
-		CourseID: inp.CourseID,
-		SchoolID: inp.SchoolID,
-	}
+func (s *ModulesService) Create(ctx context.Context, inp domain.CreateModuleInput) (uint, error) {
+	module := domain.NewModule(inp.Name, inp.Position, inp.CourseID, inp.SchoolID)
 
-	return s.repo.Create(ctx, module)
+	return s.repo.Create(ctx, *module)
 }
 
-func (s *ModulesService) Update(ctx context.Context, inp UpdateModuleInput) error {
-	updateInput := repository.UpdateModuleInput{
-		ID:        inp.ID,
-		SchoolID:  inp.SchoolID,
-		Name:      inp.Name,
-		Position:  inp.Position,
-		Published: inp.Published,
-	}
-
-	return s.repo.Update(ctx, updateInput)
+func (s *ModulesService) Update(ctx context.Context, inp domain.UpdateModuleInput) error {
+	return s.repo.Update(ctx, inp)
 }
 
 func (s *ModulesService) Delete(ctx context.Context, schoolID, moduleID uint) error {
@@ -140,10 +119,8 @@ func (s *ModulesService) Delete(ctx context.Context, schoolID, moduleID uint) er
 		return err
 	}
 
-	lessonIDs := make([]uint, len(module.Lessons))
-	for i, lesson := range module.Lessons {
-		lessonIDs[i] = lesson.ID
-	}
+	// 使用 domain 方法获取课时ID
+	lessonIDs := module.GetLessonIDs()
 
 	return s.contentRepo.DeleteContent(ctx, schoolID, lessonIDs)
 }
@@ -158,19 +135,11 @@ func (s *ModulesService) DeleteByCourse(ctx context.Context, schoolID, courseID 
 		return err
 	}
 
+	// 使用 domain 方法获取所有课时ID
 	lessonIDs := make([]uint, 0)
-
-	for _, module := range modules {
-		for _, lesson := range module.Lessons {
-			lessonIDs = append(lessonIDs, lesson.ID)
-		}
+	for i := range modules {
+		lessonIDs = append(lessonIDs, modules[i].GetLessonIDs()...)
 	}
 
 	return s.contentRepo.DeleteContent(ctx, schoolID, lessonIDs)
-}
-
-func sortLessons(lessons []domain.Lesson) {
-	sort.Slice(lessons, func(i, j int) bool {
-		return lessons[i].Position < lessons[j].Position
-	})
 }

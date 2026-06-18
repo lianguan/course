@@ -4,16 +4,15 @@ import (
 	"context"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 )
 
 type OffersService struct {
-	repo            repository.Offers
+	repo            OffersRepository
 	modulesService  Modules
 	packagesService Packages
 }
 
-func NewOffersService(repo repository.Offers, modulesService Modules, packagesService Packages) *OffersService {
+func NewOffersService(repo OffersRepository, modulesService Modules, packagesService Packages) *OffersService {
 	return &OffersService{repo: repo, modulesService: modulesService, packagesService: packagesService}
 }
 
@@ -29,9 +28,9 @@ func (s *OffersService) getByPackage(ctx context.Context, schoolID, packageID ui
 
 	result := make([]domain.Offer, 0)
 
-	for _, offer := range offers {
-		if inArray(offer.PackageIDs, packageID) {
-			result = append(result, offer)
+	for i := range offers {
+		if offers[i].ContainsPackage(packageID) {
+			result = append(result, offers[i])
 		}
 	}
 
@@ -65,45 +64,34 @@ func (s *OffersService) GetByCourse(ctx context.Context, courseID uint) ([]domai
 	return s.repo.GetByPackages(ctx, packageIDs)
 }
 
-func (s *OffersService) Create(ctx context.Context, inp CreateOfferInput) (uint, error) {
-	if inp.PaymentMethod.UsesProvider {
-		if err := inp.PaymentMethod.Validate(); err != nil {
-			return 0, err
-		}
+func (s *OffersService) Create(ctx context.Context, inp domain.CreateOfferInput) (uint, error) {
+	offer := domain.NewOffer(
+		inp.SchoolID,
+		inp.Name,
+		inp.Description,
+		inp.Benefits,
+		inp.Price,
+		inp.PaymentMethod,
+		inp.Packages,
+	)
+
+	if err := offer.ValidatePaymentMethod(); err != nil {
+		return 0, err
 	}
 
-	return s.repo.Create(ctx, domain.Offer{
-		SchoolID:      inp.SchoolID,
-		Name:          inp.Name,
-		Description:   inp.Description,
-		Benefits:      inp.Benefits,
-		Price:         inp.Price,
-		PaymentMethod: inp.PaymentMethod,
-		PackageIDs:    inp.Packages,
-	})
+	return s.repo.Create(ctx, *offer)
 }
 
 func (s *OffersService) GetAll(ctx context.Context, schoolID uint) ([]domain.Offer, error) {
 	return s.repo.GetBySchool(ctx, schoolID)
 }
 
-func (s *OffersService) Update(ctx context.Context, inp UpdateOfferInput) error {
+func (s *OffersService) Update(ctx context.Context, inp domain.UpdateOfferInput) error {
 	if err := inp.ValidatePayment(); err != nil {
 		return err
 	}
 
-	updateInput := repository.UpdateOfferInput{
-		ID:            inp.ID,
-		SchoolID:      inp.SchoolID,
-		Name:          inp.Name,
-		Description:   inp.Description,
-		Price:         inp.Price,
-		Benefits:      inp.Benefits,
-		PaymentMethod: inp.PaymentMethod,
-		Packages:      inp.Packages,
-	}
-
-	return s.repo.Update(ctx, updateInput)
+	return s.repo.Update(ctx, inp)
 }
 
 func (s *OffersService) Delete(ctx context.Context, schoolID, id uint) error {
@@ -112,14 +100,4 @@ func (s *OffersService) Delete(ctx context.Context, schoolID, id uint) error {
 
 func (s *OffersService) GetByIds(ctx context.Context, ids []uint) ([]domain.Offer, error) {
 	return s.repo.GetByIDs(ctx, ids)
-}
-
-func inArray(array []uint, searchedItem uint) bool {
-	for i := range array {
-		if array[i] == searchedItem {
-			return true
-		}
-	}
-
-	return false
 }

@@ -48,10 +48,10 @@ func TestNewAdminsService_SignInErr(t *testing.T) {
 	adminRepo.EXPECT().GetByCredentials(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(domain.Admin{}, errInternalServErr)
 	adminRepo.EXPECT().SetSession(ctx, gomock.Any(), gomock.Any())
 
-	res, err := adminService.SignIn(ctx, service.SchoolSignInInput{})
+	res, err := adminService.SignIn(ctx, domain.SchoolSignInInput{})
 
 	require.True(t, errors.Is(err, errInternalServErr))
-	require.Equal(t, service.Tokens{}, res)
+	require.Equal(t, domain.Tokens{}, res)
 }
 
 func TestNewAdminsService_SignIn(t *testing.T) {
@@ -62,10 +62,10 @@ func TestNewAdminsService_SignIn(t *testing.T) {
 	adminRepo.EXPECT().GetByCredentials(ctx, gomock.Any(), gomock.Any(), gomock.Any())
 	adminRepo.EXPECT().SetSession(ctx, gomock.Any(), gomock.Any())
 
-	res, err := adminService.SignIn(ctx, service.SchoolSignInInput{})
+	res, err := adminService.SignIn(ctx, domain.SchoolSignInInput{})
 
 	require.NoError(t, err)
-	require.IsType(t, service.Tokens{}, res)
+	require.IsType(t, domain.Tokens{}, res)
 }
 
 func TestNewAdminsService_RefreshTokensErr(t *testing.T) {
@@ -78,7 +78,7 @@ func TestNewAdminsService_RefreshTokensErr(t *testing.T) {
 	res, err := adminService.RefreshTokens(ctx, uint(0), "")
 
 	require.True(t, errors.Is(err, errInternalServErr))
-	require.Equal(t, service.Tokens{}, res)
+	require.Equal(t, domain.Tokens{}, res)
 }
 
 func TestNewAdminsService_RefreshTokens(t *testing.T) {
@@ -92,7 +92,7 @@ func TestNewAdminsService_RefreshTokens(t *testing.T) {
 	res, err := adminService.RefreshTokens(ctx, uint(0), "")
 
 	require.NoError(t, err)
-	require.IsType(t, service.Tokens{}, res)
+	require.IsType(t, domain.Tokens{}, res)
 }
 
 func TestNewAdminsService_GetCoursesErr(t *testing.T) {

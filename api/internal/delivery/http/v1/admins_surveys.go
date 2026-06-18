@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -88,7 +87,7 @@ func (h *Handler) adminCreateOrUpdateSurvey(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Surveys.Create(c.Request.Context(), service.CreateSurveyInput{
+	if err := h.services.Surveys.Create(c.Request.Context(), domain.CreateSurveyInput{
 		ModuleID: id,
 		SchoolID: school.ID,
 		Survey: domain.Survey{

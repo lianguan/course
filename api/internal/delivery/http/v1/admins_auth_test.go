@@ -23,7 +23,7 @@ func init() {
 }
 
 func TestHandler_adminSignIn(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockAdmins, input service.SchoolSignInInput)
+	type mockBehavior func(r *mock_service.MockAdmins, input domain.SchoolSignInInput)
 
 	school := domain.School{ID: 1}
 
@@ -31,7 +31,7 @@ func TestHandler_adminSignIn(t *testing.T) {
 		name         string
 		body         string
 		school       domain.School
-		input        service.SchoolSignInInput
+		input        domain.SchoolSignInInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -40,13 +40,13 @@ func TestHandler_adminSignIn(t *testing.T) {
 			name:   "ok",
 			body:   `{"email":"admin@example.com","password":"password123"}`,
 			school: school,
-			input: service.SchoolSignInInput{
+			input: domain.SchoolSignInInput{
 				Email:    "admin@example.com",
 				Password: "password123",
 				SchoolID: school.ID,
 			},
-			mockBehavior: func(r *mock_service.MockAdmins, input service.SchoolSignInInput) {
-				r.EXPECT().SignIn(context.Background(), input).Return(service.Tokens{
+			mockBehavior: func(r *mock_service.MockAdmins, input domain.SchoolSignInInput) {
+				r.EXPECT().SignIn(context.Background(), input).Return(domain.Tokens{
 					AccessToken:  "access-token",
 					RefreshToken: "refresh-token",
 				}, nil)
@@ -58,7 +58,7 @@ func TestHandler_adminSignIn(t *testing.T) {
 			name:         "invalid input",
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockAdmins, input service.SchoolSignInInput) {},
+			mockBehavior: func(r *mock_service.MockAdmins, input domain.SchoolSignInInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -66,13 +66,13 @@ func TestHandler_adminSignIn(t *testing.T) {
 			name:   "user not found",
 			body:   `{"email":"admin@example.com","password":"password123"}`,
 			school: school,
-			input: service.SchoolSignInInput{
+			input: domain.SchoolSignInInput{
 				Email:    "admin@example.com",
 				Password: "password123",
 				SchoolID: school.ID,
 			},
-			mockBehavior: func(r *mock_service.MockAdmins, input service.SchoolSignInInput) {
-				r.EXPECT().SignIn(context.Background(), input).Return(service.Tokens{}, domain.ErrUserNotFound)
+			mockBehavior: func(r *mock_service.MockAdmins, input domain.SchoolSignInInput) {
+				r.EXPECT().SignIn(context.Background(), input).Return(domain.Tokens{}, domain.ErrUserNotFound)
 			},
 			statusCode:   401,
 			responseBody: `{"message":"user doesn't exists"}`,
@@ -81,13 +81,13 @@ func TestHandler_adminSignIn(t *testing.T) {
 			name:   "service error",
 			body:   `{"email":"admin@example.com","password":"password123"}`,
 			school: school,
-			input: service.SchoolSignInInput{
+			input: domain.SchoolSignInInput{
 				Email:    "admin@example.com",
 				Password: "password123",
 				SchoolID: school.ID,
 			},
-			mockBehavior: func(r *mock_service.MockAdmins, input service.SchoolSignInInput) {
-				r.EXPECT().SignIn(context.Background(), input).Return(service.Tokens{}, errors.New("service error"))
+			mockBehavior: func(r *mock_service.MockAdmins, input domain.SchoolSignInInput) {
+				r.EXPECT().SignIn(context.Background(), input).Return(domain.Tokens{}, errors.New("service error"))
 			},
 			statusCode:   500,
 			responseBody: `{"message":"service error"}`,
@@ -142,7 +142,7 @@ func TestHandler_adminRefresh(t *testing.T) {
 			school: school,
 			token:  "refresh-token",
 			mockBehavior: func(r *mock_service.MockAdmins, schoolID uint, token string) {
-				r.EXPECT().RefreshTokens(context.Background(), schoolID, token).Return(service.Tokens{
+				r.EXPECT().RefreshTokens(context.Background(), schoolID, token).Return(domain.Tokens{
 					AccessToken:  "new-access-token",
 					RefreshToken: "new-refresh-token",
 				}, nil)
@@ -164,7 +164,7 @@ func TestHandler_adminRefresh(t *testing.T) {
 			school: school,
 			token:  "refresh-token",
 			mockBehavior: func(r *mock_service.MockAdmins, schoolID uint, token string) {
-				r.EXPECT().RefreshTokens(context.Background(), schoolID, token).Return(service.Tokens{}, errors.New("service error"))
+				r.EXPECT().RefreshTokens(context.Background(), schoolID, token).Return(domain.Tokens{}, errors.New("service error"))
 			},
 			statusCode:   500,
 			responseBody: `{"message":"service error"}`,

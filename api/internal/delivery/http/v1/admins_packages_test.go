@@ -23,7 +23,7 @@ func init() {
 }
 
 func TestHandler_adminCreatePackage(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockPackages, input service.CreatePackageInput)
+	type mockBehavior func(r *mock_service.MockPackages, input domain.CreatePackageInput)
 
 	school := domain.School{ID: 1}
 
@@ -32,7 +32,7 @@ func TestHandler_adminCreatePackage(t *testing.T) {
 		courseId     uint
 		body         string
 		school       domain.School
-		input        service.CreatePackageInput
+		input        domain.CreatePackageInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -42,13 +42,13 @@ func TestHandler_adminCreatePackage(t *testing.T) {
 			courseId: 1,
 			body:     `{"name":"New Package","modules":[1,2,3]}`,
 			school:   school,
-			input: service.CreatePackageInput{
+			input: domain.CreatePackageInput{
 				SchoolID: school.ID,
 				CourseID: 1,
 				Name:     "New Package",
 				Modules:  []uint{1, 2, 3},
 			},
-			mockBehavior: func(r *mock_service.MockPackages, input service.CreatePackageInput) {
+			mockBehavior: func(r *mock_service.MockPackages, input domain.CreatePackageInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(1), nil)
 			},
 			statusCode:   201,
@@ -59,7 +59,7 @@ func TestHandler_adminCreatePackage(t *testing.T) {
 			courseId:     1,
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockPackages, input service.CreatePackageInput) {},
+			mockBehavior: func(r *mock_service.MockPackages, input domain.CreatePackageInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -68,13 +68,13 @@ func TestHandler_adminCreatePackage(t *testing.T) {
 			courseId: 1,
 			body:     `{"name":"New Package","modules":[1,2,3]}`,
 			school:   school,
-			input: service.CreatePackageInput{
+			input: domain.CreatePackageInput{
 				SchoolID: school.ID,
 				CourseID: 1,
 				Name:     "New Package",
 				Modules:  []uint{1, 2, 3},
 			},
-			mockBehavior: func(r *mock_service.MockPackages, input service.CreatePackageInput) {
+			mockBehavior: func(r *mock_service.MockPackages, input domain.CreatePackageInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(0), errors.New("service error"))
 			},
 			statusCode:   500,
@@ -244,7 +244,7 @@ func TestHandler_adminGetPackageById(t *testing.T) {
 }
 
 func TestHandler_adminUpdatePackage(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockPackages, input service.UpdatePackageInput)
+	type mockBehavior func(r *mock_service.MockPackages, input domain.UpdatePackageInput)
 
 	school := domain.School{ID: 1}
 
@@ -253,7 +253,7 @@ func TestHandler_adminUpdatePackage(t *testing.T) {
 		packageId    uint
 		body         string
 		school       domain.School
-		input        service.UpdatePackageInput
+		input        domain.UpdatePackageInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -263,13 +263,13 @@ func TestHandler_adminUpdatePackage(t *testing.T) {
 			packageId: 1,
 			body:      `{"name":"Updated Package","modules":[1,2]}`,
 			school:    school,
-			input: service.UpdatePackageInput{
+			input: domain.UpdatePackageInput{
 				ID:       1,
 				SchoolID: school.ID,
 				Name:     "Updated Package",
 				Modules:  []uint{1, 2},
 			},
-			mockBehavior: func(r *mock_service.MockPackages, input service.UpdatePackageInput) {
+			mockBehavior: func(r *mock_service.MockPackages, input domain.UpdatePackageInput) {
 				r.EXPECT().Update(context.Background(), input).Return(nil)
 			},
 			statusCode:   200,
@@ -280,7 +280,7 @@ func TestHandler_adminUpdatePackage(t *testing.T) {
 			packageId:    1,
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockPackages, input service.UpdatePackageInput) {},
+			mockBehavior: func(r *mock_service.MockPackages, input domain.UpdatePackageInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -289,13 +289,13 @@ func TestHandler_adminUpdatePackage(t *testing.T) {
 			packageId: 1,
 			body:      `{"name":"Updated Package","modules":[1,2]}`,
 			school:    school,
-			input: service.UpdatePackageInput{
+			input: domain.UpdatePackageInput{
 				ID:       1,
 				SchoolID: school.ID,
 				Name:     "Updated Package",
 				Modules:  []uint{1, 2},
 			},
-			mockBehavior: func(r *mock_service.MockPackages, input service.UpdatePackageInput) {
+			mockBehavior: func(r *mock_service.MockPackages, input domain.UpdatePackageInput) {
 				r.EXPECT().Update(context.Background(), input).Return(errors.New("service error"))
 			},
 			statusCode:   500,

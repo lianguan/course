@@ -2,15 +2,13 @@ package service
 
 import (
 	"context"
-
-	"ultrathreads/internal/repository"
 )
 
 type StudentLessonsService struct {
-	repo repository.StudentLessons
+	repo StudentLessonsRepository
 }
 
-func NewStudentLessonsService(repo repository.StudentLessons) *StudentLessonsService {
+func NewStudentLessonsService(repo StudentLessonsRepository) *StudentLessonsService {
 	return &StudentLessonsService{
 		repo: repo,
 	}

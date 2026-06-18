@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 	"ultrathreads/pkg/auth"
 	"ultrathreads/pkg/hash"
 	"ultrathreads/pkg/logger"
@@ -15,7 +14,7 @@ import (
 )
 
 type StudentsService struct {
-	repo         repository.Students
+	repo         StudentsRepository
 	hasher       hash.PasswordHasher
 	tokenManager auth.TokenManager
 	otpGenerator otp.Generator
@@ -31,7 +30,7 @@ type StudentsService struct {
 	verificationCodeLength int
 }
 
-func NewStudentsService(repo repository.Students, modulesService Modules, offersService Offers, lessonsService Lessons, hasher hash.PasswordHasher, tokenManager auth.TokenManager,
+func NewStudentsService(repo StudentsRepository, modulesService Modules, offersService Offers, lessonsService Lessons, hasher hash.PasswordHasher, tokenManager auth.TokenManager,
 	emailService Emails, studentLessonsService StudentLessons, accessTTL, refreshTTL time.Duration, otpGenerator otp.Generator, verificationCodeLength int) *StudentsService {
 	return &StudentsService{
 		repo:                   repo,
@@ -49,37 +48,30 @@ func NewStudentsService(repo repository.Students, modulesService Modules, offers
 	}
 }
 
-func (s *StudentsService) SignUp(ctx context.Context, input StudentSignUpInput) error {
+func (s *StudentsService) SignUp(ctx context.Context, input domain.StudentSignUpInput) error {
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
 		return err
 	}
 
-	student := domain.Student{
-		Name:         input.Name,
-		Password:     passwordHash,
-		Email:        input.Email,
-		RegisteredAt: time.Now(),
-		LastVisitAt:  time.Now(),
-		SchoolID:     input.SchoolID,
-	}
+	student := domain.NewStudent(input.Name, input.Email, passwordHash, input.SchoolID)
 
 	if input.Verified {
-		student.Verification.Verified = true
+		student.MarkAsVerified()
 
-		go s.addStudentToList(context.Background(), student)
+		go s.addStudentToList(context.Background(), *student)
 
-		return s.repo.Create(ctx, &student)
+		return s.repo.Create(ctx, student)
 	}
 
 	verificationCode := s.otpGenerator.RandomSecret(s.verificationCodeLength)
-	student.Verification.Code = verificationCode
+	student.SetVerificationCode(verificationCode)
 
-	if err := s.repo.Create(ctx, &student); err != nil {
+	if err := s.repo.Create(ctx, student); err != nil {
 		return err
 	}
 
-	return s.emailService.SendStudentVerificationEmail(VerificationEmailInput{
+	return s.emailService.SendStudentVerificationEmail(domain.VerificationEmailInput{
 		Email:            student.Email,
 		Name:             student.Name,
 		VerificationCode: verificationCode,
@@ -87,36 +79,36 @@ func (s *StudentsService) SignUp(ctx context.Context, input StudentSignUpInput) 
 	})
 }
 
-func (s *StudentsService) SignIn(ctx context.Context, input SchoolSignInInput) (Tokens, error) {
+func (s *StudentsService) SignIn(ctx context.Context, input domain.SchoolSignInInput) (domain.Tokens, error) {
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
 	student, err := s.repo.GetByCredentials(ctx, input.SchoolID, input.Email, passwordHash)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return Tokens{}, err
+			return domain.Tokens{}, err
 		}
 
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
-	if student.Blocked {
-		return Tokens{}, domain.ErrStudentBlocked
+	if student.IsBlocked() {
+		return domain.Tokens{}, domain.ErrStudentBlocked
 	}
 
 	return s.createSession(ctx, student.ID)
 }
 
-func (s *StudentsService) RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (Tokens, error) {
+func (s *StudentsService) RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (domain.Tokens, error) {
 	student, err := s.repo.GetByRefreshToken(ctx, schoolID, refreshToken)
 	if err != nil {
-		return Tokens{}, err
+		return domain.Tokens{}, err
 	}
 
-	if student.Blocked {
-		return Tokens{}, domain.ErrStudentBlocked
+	if student.IsBlocked() {
+		return domain.Tokens{}, domain.ErrStudentBlocked
 	}
 
 	return s.createSession(ctx, student.ID)
@@ -237,9 +229,9 @@ func (s *StudentsService) GetBySchool(ctx context.Context, schoolID uint, query 
 	return s.repo.GetBySchool(ctx, schoolID, query)
 }
 
-func (s *StudentsService) createSession(ctx context.Context, studentID uint) (Tokens, error) {
+func (s *StudentsService) createSession(ctx context.Context, studentID uint) (domain.Tokens, error) {
 	var (
-		res Tokens
+		res domain.Tokens
 		err error
 	)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"ultrathreads/internal/domain"
+
 	"gorm.io/gorm"
 )
 
@@ -61,7 +62,7 @@ func (r *ModulesRepo) GetByPackages(ctx context.Context, packageIDs []uint) ([]d
 	return modules, err
 }
 
-func (r *ModulesRepo) Update(ctx context.Context, inp UpdateModuleInput) error {
+func (r *ModulesRepo) Update(ctx context.Context, inp domain.UpdateModuleInput) error {
 	updates := map[string]interface{}{}
 
 	if inp.Name != "" {
@@ -98,14 +99,14 @@ func (r *ModulesRepo) AddLesson(ctx context.Context, schoolID, id uint, lesson d
 
 func (r *ModulesRepo) GetByLesson(ctx context.Context, lessonID uint) (domain.Module, error) {
 	var module domain.Module
+	// 使用 MySQL JSON 函数正确搜索 JSON 数组中的 ID
 	err := r.db.WithContext(ctx).
-		Where("lessons LIKE ?", "%"+`"id":`+string(rune('0'+lessonID))+"%").
+		Where("JSON_CONTAINS(lessons, JSON_OBJECT('id', ?))", lessonID).
 		First(&module).Error
-	// Note: JSON search is limited; for production consider a separate lessons table
 	return module, err
 }
 
-func (r *ModulesRepo) UpdateLesson(ctx context.Context, inp UpdateLessonInput) error {
+func (r *ModulesRepo) UpdateLesson(ctx context.Context, inp domain.UpdateLessonInput) error {
 	var module domain.Module
 	if err := r.db.WithContext(ctx).
 		Where("school_id = ?", inp.SchoolID).

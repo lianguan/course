@@ -45,7 +45,7 @@ func NewEmailsService(sender emailProvider.Sender, config config.EmailConfig, sc
 	}
 }
 
-func (s *EmailService) SendStudentVerificationEmail(input VerificationEmailInput) error {
+func (s *EmailService) SendStudentVerificationEmail(input domain.VerificationEmailInput) error {
 	subject := fmt.Sprintf(s.config.Subjects.Verification, input.Name)
 
 	templateInput := verificationEmailInput{s.createVerificationLink(input.Domain, input.VerificationCode)}
@@ -58,7 +58,7 @@ func (s *EmailService) SendStudentVerificationEmail(input VerificationEmailInput
 	return s.sender.Send(sendInput)
 }
 
-func (s *EmailService) SendStudentPurchaseSuccessfulEmail(input StudentPurchaseSuccessfulEmailInput) error {
+func (s *EmailService) SendStudentPurchaseSuccessfulEmail(input domain.StudentPurchaseSuccessfulEmailInput) error {
 	templateInput := purchaseSuccessfulEmailInput{Name: input.Name, CourseName: input.CourseName}
 	sendInput := emailProvider.SendEmailInput{Subject: s.config.Subjects.PurchaseSuccessful, To: input.Email}
 
@@ -69,7 +69,7 @@ func (s *EmailService) SendStudentPurchaseSuccessfulEmail(input StudentPurchaseS
 	return s.sender.Send(sendInput)
 }
 
-func (s *EmailService) SendUserVerificationEmail(input VerificationEmailInput) error {
+func (s *EmailService) SendUserVerificationEmail(input domain.VerificationEmailInput) error {
 	// todo implement
 	return nil
 }

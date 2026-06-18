@@ -144,91 +144,104 @@ func (r *StudentsRepo) SetSession(ctx context.Context, studentID uint, session d
 }
 
 func (r *StudentsRepo) GiveAccessToModule(ctx context.Context, studentID, moduleID uint) error {
-	var student domain.Student
-	if err := r.db.WithContext(ctx).First(&student, studentID).Error; err != nil {
-		return err
-	}
-
-	modules := student.AvailableModules
-	// Check if already exists
-	for _, m := range modules {
-		if m == moduleID {
-			return nil
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var student domain.Student
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&student, studentID).Error; err != nil {
+			return err
 		}
-	}
-	modules = append(modules, moduleID)
 
-	return r.db.WithContext(ctx).
-		Model(&domain.Student{}).
-		Where("id = ?", studentID).
-		Update("available_modules", modules).Error
+		// 检查是否已存在
+		for _, m := range student.AvailableModules {
+			if m == moduleID {
+				return nil
+			}
+		}
+
+		modules := append(student.AvailableModules, moduleID)
+		return tx.Model(&domain.Student{}).
+			Where("id = ?", studentID).
+			Update("available_modules", modules).Error
+	})
 }
 
 func (r *StudentsRepo) AttachOffer(ctx context.Context, studentID, offerID uint, moduleIDs []uint) error {
-	var student domain.Student
-	if err := r.db.WithContext(ctx).First(&student, studentID).Error; err != nil {
-		return err
-	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var student domain.Student
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&student, studentID).Error; err != nil {
+			return err
+		}
 
-	modules := student.AvailableModules
-	for _, mid := range moduleIDs {
+		// 添加模块（去重）
+		modules := student.AvailableModules
+		for _, mid := range moduleIDs {
+			found := false
+			for _, m := range modules {
+				if m == mid {
+					found = true
+					break
+				}
+			}
+			if !found {
+				modules = append(modules, mid)
+			}
+		}
+
+		// 添加优惠（去重）
+		offers := student.AvailableOffers
 		found := false
-		for _, m := range modules {
-			if m == mid {
+		for _, o := range offers {
+			if o == offerID {
 				found = true
 				break
 			}
 		}
 		if !found {
-			modules = append(modules, mid)
+			offers = append(offers, offerID)
 		}
-	}
 
-	offers := student.AvailableOffers
-	offers = append(offers, offerID)
-
-	return r.db.WithContext(ctx).
-		Model(&domain.Student{}).
-		Where("id = ?", studentID).
-		Updates(map[string]interface{}{
-			"available_modules": modules,
-			"available_offers":  offers,
-		}).Error
+		return tx.Model(&domain.Student{}).
+			Where("id = ?", studentID).
+			Updates(map[string]interface{}{
+				"available_modules": modules,
+				"available_offers":  offers,
+			}).Error
+	})
 }
 
 func (r *StudentsRepo) DetachOffer(ctx context.Context, studentID, offerID uint, moduleIDs []uint) error {
-	var student domain.Student
-	if err := r.db.WithContext(ctx).First(&student, studentID).Error; err != nil {
-		return err
-	}
-
-	// Remove modules
-	removeSet := make(map[uint]bool)
-	for _, mid := range moduleIDs {
-		removeSet[mid] = true
-	}
-	var filtered []uint
-	for _, m := range student.AvailableModules {
-		if !removeSet[m] {
-			filtered = append(filtered, m)
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var student domain.Student
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&student, studentID).Error; err != nil {
+			return err
 		}
-	}
 
-	// Remove offer
-	var filteredOffers []uint
-	for _, o := range student.AvailableOffers {
-		if o != offerID {
-			filteredOffers = append(filteredOffers, o)
+		// 移除模块
+		removeSet := make(map[uint]bool)
+		for _, mid := range moduleIDs {
+			removeSet[mid] = true
 		}
-	}
+		var filtered []uint
+		for _, m := range student.AvailableModules {
+			if !removeSet[m] {
+				filtered = append(filtered, m)
+			}
+		}
 
-	return r.db.WithContext(ctx).
-		Model(&domain.Student{}).
-		Where("id = ?", studentID).
-		Updates(map[string]interface{}{
-			"available_modules": filtered,
-			"available_offers":  filteredOffers,
-		}).Error
+		// 移除优惠
+		var filteredOffers []uint
+		for _, o := range student.AvailableOffers {
+			if o != offerID {
+				filteredOffers = append(filteredOffers, o)
+			}
+		}
+
+		return tx.Model(&domain.Student{}).
+			Where("id = ?", studentID).
+			Updates(map[string]interface{}{
+				"available_modules": filtered,
+				"available_offers":  filteredOffers,
+			}).Error
+	})
 }
 
 func (r *StudentsRepo) Verify(ctx context.Context, code string) (domain.Student, error) {

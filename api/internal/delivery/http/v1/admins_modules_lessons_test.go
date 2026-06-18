@@ -23,7 +23,7 @@ func init() {
 }
 
 func TestHandler_adminCreateModule(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockModules, input service.CreateModuleInput)
+	type mockBehavior func(r *mock_service.MockModules, input domain.CreateModuleInput)
 
 	school := domain.School{ID: 1}
 
@@ -32,7 +32,7 @@ func TestHandler_adminCreateModule(t *testing.T) {
 		courseId     uint
 		body         string
 		school       domain.School
-		input        service.CreateModuleInput
+		input        domain.CreateModuleInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -42,13 +42,13 @@ func TestHandler_adminCreateModule(t *testing.T) {
 			courseId: 1,
 			body:     `{"name":"New Module","position":1}`,
 			school:   school,
-			input: service.CreateModuleInput{
+			input: domain.CreateModuleInput{
 				SchoolID: school.ID,
 				CourseID: 1,
 				Name:     "New Module",
 				Position: 1,
 			},
-			mockBehavior: func(r *mock_service.MockModules, input service.CreateModuleInput) {
+			mockBehavior: func(r *mock_service.MockModules, input domain.CreateModuleInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(1), nil)
 			},
 			statusCode:   201,
@@ -59,7 +59,7 @@ func TestHandler_adminCreateModule(t *testing.T) {
 			courseId:     1,
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockModules, input service.CreateModuleInput) {},
+			mockBehavior: func(r *mock_service.MockModules, input domain.CreateModuleInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -68,13 +68,13 @@ func TestHandler_adminCreateModule(t *testing.T) {
 			courseId: 1,
 			body:     `{"name":"New Module","position":1}`,
 			school:   school,
-			input: service.CreateModuleInput{
+			input: domain.CreateModuleInput{
 				SchoolID: school.ID,
 				CourseID: 1,
 				Name:     "New Module",
 				Position: 1,
 			},
-			mockBehavior: func(r *mock_service.MockModules, input service.CreateModuleInput) {
+			mockBehavior: func(r *mock_service.MockModules, input domain.CreateModuleInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(0), errors.New("service error"))
 			},
 			statusCode:   500,
@@ -111,7 +111,7 @@ func TestHandler_adminCreateModule(t *testing.T) {
 }
 
 func TestHandler_adminUpdateModule(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockModules, input service.UpdateModuleInput)
+	type mockBehavior func(r *mock_service.MockModules, input domain.UpdateModuleInput)
 
 	school := domain.School{ID: 1}
 
@@ -120,7 +120,7 @@ func TestHandler_adminUpdateModule(t *testing.T) {
 		moduleId     uint
 		body         string
 		school       domain.School
-		input        service.UpdateModuleInput
+		input        domain.UpdateModuleInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -130,13 +130,13 @@ func TestHandler_adminUpdateModule(t *testing.T) {
 			moduleId: 1,
 			body:     `{"name":"Updated Module","position":2}`,
 			school:   school,
-			input: service.UpdateModuleInput{
+			input: domain.UpdateModuleInput{
 				ID:       1,
 				SchoolID: school.ID,
 				Name:     "Updated Module",
 				Position: uintPtr(2),
 			},
-			mockBehavior: func(r *mock_service.MockModules, input service.UpdateModuleInput) {
+			mockBehavior: func(r *mock_service.MockModules, input domain.UpdateModuleInput) {
 				r.EXPECT().Update(context.Background(), input).Return(nil)
 			},
 			statusCode:   200,
@@ -147,7 +147,7 @@ func TestHandler_adminUpdateModule(t *testing.T) {
 			moduleId:     1,
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockModules, input service.UpdateModuleInput) {},
+			mockBehavior: func(r *mock_service.MockModules, input domain.UpdateModuleInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -156,13 +156,13 @@ func TestHandler_adminUpdateModule(t *testing.T) {
 			moduleId: 1,
 			body:     `{"name":"Updated Module","position":2}`,
 			school:   school,
-			input: service.UpdateModuleInput{
+			input: domain.UpdateModuleInput{
 				ID:       1,
 				SchoolID: school.ID,
 				Name:     "Updated Module",
 				Position: uintPtr(2),
 			},
-			mockBehavior: func(r *mock_service.MockModules, input service.UpdateModuleInput) {
+			mockBehavior: func(r *mock_service.MockModules, input domain.UpdateModuleInput) {
 				r.EXPECT().Update(context.Background(), input).Return(errors.New("service error"))
 			},
 			statusCode:   500,
@@ -261,7 +261,7 @@ func TestHandler_adminDeleteModule(t *testing.T) {
 }
 
 func TestHandler_adminCreateLesson(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockLessons, input service.AddLessonInput)
+	type mockBehavior func(r *mock_service.MockLessons, input domain.AddLessonInput)
 
 	school := domain.School{ID: 1}
 
@@ -270,7 +270,7 @@ func TestHandler_adminCreateLesson(t *testing.T) {
 		moduleId     uint
 		body         string
 		school       domain.School
-		input        service.AddLessonInput
+		input        domain.AddLessonInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -280,13 +280,13 @@ func TestHandler_adminCreateLesson(t *testing.T) {
 			moduleId: 1,
 			body:     `{"name":"New Lesson","position":1}`,
 			school:   school,
-			input: service.AddLessonInput{
+			input: domain.AddLessonInput{
 				ModuleID: 1,
 				SchoolID: school.ID,
 				Name:     "New Lesson",
 				Position: 1,
 			},
-			mockBehavior: func(r *mock_service.MockLessons, input service.AddLessonInput) {
+			mockBehavior: func(r *mock_service.MockLessons, input domain.AddLessonInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(1), nil)
 			},
 			statusCode:   201,
@@ -297,7 +297,7 @@ func TestHandler_adminCreateLesson(t *testing.T) {
 			moduleId:     1,
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockLessons, input service.AddLessonInput) {},
+			mockBehavior: func(r *mock_service.MockLessons, input domain.AddLessonInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -306,13 +306,13 @@ func TestHandler_adminCreateLesson(t *testing.T) {
 			moduleId: 1,
 			body:     `{"name":"New Lesson","position":1}`,
 			school:   school,
-			input: service.AddLessonInput{
+			input: domain.AddLessonInput{
 				ModuleID: 1,
 				SchoolID: school.ID,
 				Name:     "New Lesson",
 				Position: 1,
 			},
-			mockBehavior: func(r *mock_service.MockLessons, input service.AddLessonInput) {
+			mockBehavior: func(r *mock_service.MockLessons, input domain.AddLessonInput) {
 				r.EXPECT().Create(context.Background(), input).Return(uint(0), errors.New("service error"))
 			},
 			statusCode:   500,
@@ -416,7 +416,7 @@ func TestHandler_adminGetLessonById(t *testing.T) {
 }
 
 func TestHandler_adminUpdateLesson(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockLessons, input service.UpdateLessonInput)
+	type mockBehavior func(r *mock_service.MockLessons, input domain.UpdateLessonInput)
 
 	school := domain.School{ID: 1}
 
@@ -425,7 +425,7 @@ func TestHandler_adminUpdateLesson(t *testing.T) {
 		lessonId     uint
 		body         string
 		school       domain.School
-		input        service.UpdateLessonInput
+		input        domain.UpdateLessonInput
 		mockBehavior mockBehavior
 		statusCode   int
 		responseBody string
@@ -435,13 +435,13 @@ func TestHandler_adminUpdateLesson(t *testing.T) {
 			lessonId: 1,
 			body:     `{"name":"Updated Lesson","content":"Updated Content"}`,
 			school:   school,
-			input: service.UpdateLessonInput{
-				LessonID: 1,
+			input: domain.UpdateLessonInput{
+				ID:       1,
 				SchoolID: school.ID,
 				Name:     "Updated Lesson",
 				Content:  "Updated Content",
 			},
-			mockBehavior: func(r *mock_service.MockLessons, input service.UpdateLessonInput) {
+			mockBehavior: func(r *mock_service.MockLessons, input domain.UpdateLessonInput) {
 				r.EXPECT().Update(context.Background(), input).Return(nil)
 			},
 			statusCode:   200,
@@ -452,7 +452,7 @@ func TestHandler_adminUpdateLesson(t *testing.T) {
 			lessonId:     1,
 			body:         `{wrong}`,
 			school:       school,
-			mockBehavior: func(r *mock_service.MockLessons, input service.UpdateLessonInput) {},
+			mockBehavior: func(r *mock_service.MockLessons, input domain.UpdateLessonInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
 		},
@@ -461,13 +461,13 @@ func TestHandler_adminUpdateLesson(t *testing.T) {
 			lessonId: 1,
 			body:     `{"name":"Updated Lesson","content":"Updated Content"}`,
 			school:   school,
-			input: service.UpdateLessonInput{
-				LessonID: 1,
+			input: domain.UpdateLessonInput{
+				ID:       1,
 				SchoolID: school.ID,
 				Name:     "Updated Lesson",
 				Content:  "Updated Content",
 			},
-			mockBehavior: func(r *mock_service.MockLessons, input service.UpdateLessonInput) {
+			mockBehavior: func(r *mock_service.MockLessons, input domain.UpdateLessonInput) {
 				r.EXPECT().Update(context.Background(), input).Return(errors.New("service error"))
 			},
 			statusCode:   500,

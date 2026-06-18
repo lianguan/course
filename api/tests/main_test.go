@@ -83,11 +83,24 @@ func (s *APITestSuite) initDeps() {
 	}
 
 	services := service.NewServices(service.Deps{
-		Repos:        repos,
-		Cache:        memCache,
-		Hasher:       hasher,
-		TokenManager: tokenManager,
-		EmailSender:  s.mocks.emailSender,
+		SchoolsRepo:          repos.Schools,
+		StudentsRepo:         repos.Students,
+		StudentLessonsRepo:   repos.StudentLessons,
+		CoursesRepo:          repos.Courses,
+		ModulesRepo:          repos.Modules,
+		LessonContentRepo:    repos.LessonContent,
+		PackagesRepo:         repos.Packages,
+		OffersRepo:           repos.Offers,
+		PromoCodesRepo:       repos.PromoCodes,
+		OrdersRepo:           repos.Orders,
+		AdminsRepo:           repos.Admins,
+		UsersRepo:            repos.Users,
+		FilesRepo:            repos.Files,
+		SurveyResultsRepo:    repos.SurveyResults,
+		Cache:                memCache,
+		Hasher:               hasher,
+		TokenManager:         tokenManager,
+		EmailSender:          s.mocks.emailSender,
 		EmailConfig: config.EmailConfig{
 			Templates: config.EmailTemplates{
 				Verification:       "../templates/verification_email.html",

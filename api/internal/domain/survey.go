@@ -27,3 +27,18 @@ type SurveyAnswer struct {
 	QuestionID uint   `json:"questionId"` // 问题ID
 	Answer     string `json:"answer"`     // 答案内容
 }
+
+// CreateSurveyInput 问卷创建输入（Service 层使用）
+type CreateSurveyInput struct {
+	ModuleID uint
+	SchoolID uint
+	Survey   Survey
+}
+
+// SaveStudentAnswersInput 学生答案保存输入（Service 层使用）
+type SaveStudentAnswersInput struct {
+	ModuleID  uint
+	StudentID uint
+	SchoolID  uint
+	Answers   []SurveyAnswer
+}

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) initStudentsRoutes(api *gin.RouterGroup) {
@@ -73,7 +73,7 @@ func (h *Handler) studentSignUp(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Students.SignUp(c.Request.Context(), service.StudentSignUpInput{
+	if err := h.services.Students.SignUp(c.Request.Context(), domain.StudentSignUpInput{
 		Name:         inp.Name,
 		Email:        inp.Email,
 		Password:     inp.Password,
@@ -132,7 +132,7 @@ func (h *Handler) studentSignIn(c *gin.Context) {
 		return
 	}
 
-	res, err := h.services.Students.SignIn(c.Request.Context(), service.SchoolSignInInput{
+	res, err := h.services.Students.SignIn(c.Request.Context(), domain.SchoolSignInInput{
 		SchoolID: school.ID,
 		Email:    inp.Email,
 		Password: inp.Password,
@@ -355,7 +355,7 @@ func (h *Handler) studentSubmitSurvey(c *gin.Context) {
 		return
 	}
 
-	if err := h.services.Surveys.SaveStudentAnswers(c.Request.Context(), service.SaveStudentAnswersInput{
+	if err := h.services.Surveys.SaveStudentAnswers(c.Request.Context(), domain.SaveStudentAnswersInput{
 		StudentID: studentId,
 		SchoolID:  school.ID,
 		ModuleID:  moduleId,

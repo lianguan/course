@@ -2,12 +2,10 @@ package service
 
 import (
 	"context"
-	"io"
 	"time"
 
 	"ultrathreads/internal/config"
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 	"ultrathreads/pkg/auth"
 	"ultrathreads/pkg/cache"
 	"ultrathreads/pkg/email"
@@ -18,42 +16,12 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
 
-type UserSignUpInput struct {
-	Name     string
-	Email    string
-	Phone    string
-	Password string
-}
-
-type UserSignInInput struct {
-	Email    string
-	Password string
-}
-
-type Tokens struct {
-	AccessToken  string
-	RefreshToken string
-}
-
 type Users interface {
-	SignUp(ctx context.Context, input UserSignUpInput) error
-	SignIn(ctx context.Context, input UserSignInInput) (Tokens, error)
-	RefreshTokens(ctx context.Context, refreshToken string) (Tokens, error)
+	SignUp(ctx context.Context, input domain.UserSignUpInput) error
+	SignIn(ctx context.Context, input domain.UserSignInInput) (domain.Tokens, error)
+	RefreshTokens(ctx context.Context, refreshToken string) (domain.Tokens, error)
 	Verify(ctx context.Context, userID uint, hash string) error
 	CreateSchool(ctx context.Context, userID uint, schoolName string) (domain.School, error)
-}
-
-type ConnectFondyInput struct {
-	SchoolID         uint
-	MerchantID       string
-	MerchantPassword string
-}
-
-type ConnectSendPulseInput struct {
-	SchoolID uint
-	ID       string
-	Secret   string
-	ListID   string
 }
 
 type Schools interface {
@@ -61,29 +29,14 @@ type Schools interface {
 	GetByDomain(ctx context.Context, domainName string) (domain.School, error)
 	GetById(ctx context.Context, id uint) (domain.School, error)
 	UpdateSettings(ctx context.Context, schoolID uint, input domain.UpdateSchoolSettingsInput) error
-	ConnectFondy(ctx context.Context, input ConnectFondyInput) error
-	ConnectSendPulse(ctx context.Context, input ConnectSendPulseInput) error
-}
-
-type StudentSignUpInput struct {
-	Name         string
-	Email        string
-	Password     string
-	SchoolID     uint
-	SchoolDomain string
-	Verified     bool
-}
-
-type SchoolSignInInput struct {
-	Email    string
-	Password string
-	SchoolID uint
+	ConnectFondy(ctx context.Context, input domain.ConnectFondyInput) error
+	ConnectSendPulse(ctx context.Context, input domain.ConnectSendPulseInput) error
 }
 
 type Students interface {
-	SignUp(ctx context.Context, input StudentSignUpInput) error
-	SignIn(ctx context.Context, input SchoolSignInInput) (Tokens, error)
-	RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (Tokens, error)
+	SignUp(ctx context.Context, input domain.StudentSignUpInput) error
+	SignIn(ctx context.Context, input domain.SchoolSignInInput) (domain.Tokens, error)
+	RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (domain.Tokens, error)
 	Verify(ctx context.Context, hash string) error
 	GetModuleContent(ctx context.Context, schoolID, studentID, moduleID uint) (domain.ModuleContent, error)
 	GetLesson(ctx context.Context, studentID, lessonID uint) (domain.Lesson, error)
@@ -100,22 +53,13 @@ type StudentLessons interface {
 }
 
 type Admins interface {
-	SignIn(ctx context.Context, input SchoolSignInInput) (Tokens, error)
-	RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (Tokens, error)
+	SignIn(ctx context.Context, input domain.SchoolSignInInput) (domain.Tokens, error)
+	RefreshTokens(ctx context.Context, schoolID uint, refreshToken string) (domain.Tokens, error)
 	GetCourses(ctx context.Context, schoolID uint) ([]domain.Course, error)
 	GetCourseById(ctx context.Context, schoolID, courseID uint) (domain.Course, error)
 	CreateStudent(ctx context.Context, inp domain.CreateStudentInput) (domain.Student, error)
 	UpdateStudent(ctx context.Context, inp domain.UpdateStudentInput) error
 	DeleteStudent(ctx context.Context, schoolID, studentID uint) error
-}
-
-type UploadInput struct {
-	File        io.Reader
-	Filename    string
-	Size        int64
-	ContentType string
-	SchoolID    uint
-	Type        domain.FileType
 }
 
 type Files interface {
@@ -126,52 +70,21 @@ type Files interface {
 	InitStorageUploaderWorkers(ctx context.Context)
 }
 
-type VerificationEmailInput struct {
-	Email            string
-	Name             string
-	VerificationCode string
-	Domain           string
-}
-
-type StudentPurchaseSuccessfulEmailInput struct {
-	Email      string
-	Name       string
-	CourseName string
-}
-
 type Emails interface {
-	SendStudentVerificationEmail(VerificationEmailInput) error
-	SendUserVerificationEmail(VerificationEmailInput) error
-	SendStudentPurchaseSuccessfulEmail(StudentPurchaseSuccessfulEmailInput) error
+	SendStudentVerificationEmail(domain.VerificationEmailInput) error
+	SendUserVerificationEmail(domain.VerificationEmailInput) error
+	SendStudentPurchaseSuccessfulEmail(domain.StudentPurchaseSuccessfulEmailInput) error
 	AddStudentToList(ctx context.Context, email, name string, schoolID uint) error
-}
-
-type UpdateCourseInput struct {
-	CourseID    uint
-	SchoolID    uint
-	Name        *string
-	ImageURL    *string
-	Description *string
-	Color       *string
-	Published   *bool
 }
 
 type Courses interface {
 	Create(ctx context.Context, schoolID uint, name string) (uint, error)
-	Update(ctx context.Context, inp UpdateCourseInput) error
+	Update(ctx context.Context, inp domain.UpdateCourseInput) error
 	Delete(ctx context.Context, schoolID, courseID uint) error
 }
 
-type CreatePromoCodeInput struct {
-	SchoolID           uint
-	Code               string
-	DiscountPercentage int
-	ExpiresAt          time.Time
-	OfferIDs           []uint
-}
-
 type PromoCodes interface {
-	Create(ctx context.Context, inp CreatePromoCodeInput) (uint, error)
+	Create(ctx context.Context, inp domain.CreatePromoCodeInput) (uint, error)
 	Update(ctx context.Context, inp domain.UpdatePromoCodeInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	GetByCode(ctx context.Context, schoolID uint, code string) (domain.PromoCode, error)
@@ -179,42 +92,9 @@ type PromoCodes interface {
 	GetBySchool(ctx context.Context, schoolID uint) ([]domain.PromoCode, error)
 }
 
-type CreateOfferInput struct {
-	Name          string
-	Description   string
-	Benefits      []string
-	SchoolID      uint
-	Price         domain.Price
-	Packages      []uint
-	PaymentMethod domain.PaymentMethod
-}
-
-type UpdateOfferInput struct {
-	ID            uint
-	SchoolID      uint
-	Name          string
-	Description   string
-	Benefits      []string
-	Price         *domain.Price
-	Packages      []uint
-	PaymentMethod *domain.PaymentMethod
-}
-
-func (i UpdateOfferInput) ValidatePayment() error {
-	if i.PaymentMethod == nil {
-		return nil
-	}
-
-	if !i.PaymentMethod.UsesProvider {
-		return nil
-	}
-
-	return i.PaymentMethod.Validate()
-}
-
 type Offers interface {
-	Create(ctx context.Context, inp CreateOfferInput) (uint, error)
-	Update(ctx context.Context, inp UpdateOfferInput) error
+	Create(ctx context.Context, inp domain.CreateOfferInput) (uint, error)
+	Update(ctx context.Context, inp domain.UpdateOfferInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	GetById(ctx context.Context, id uint) (domain.Offer, error)
 	GetByModule(ctx context.Context, schoolID, moduleID uint) ([]domain.Offer, error)
@@ -223,24 +103,9 @@ type Offers interface {
 	GetByIds(ctx context.Context, ids []uint) ([]domain.Offer, error)
 }
 
-type CreateModuleInput struct {
-	SchoolID uint
-	CourseID uint
-	Name     string
-	Position uint
-}
-
-type UpdateModuleInput struct {
-	ID        uint
-	SchoolID  uint
-	Name      string
-	Position  *uint
-	Published *bool
-}
-
 type Modules interface {
-	Create(ctx context.Context, inp CreateModuleInput) (uint, error)
-	Update(ctx context.Context, inp UpdateModuleInput) error
+	Create(ctx context.Context, inp domain.CreateModuleInput) (uint, error)
+	Update(ctx context.Context, inp domain.UpdateModuleInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	DeleteByCourse(ctx context.Context, schoolID, courseID uint) error
 	GetPublishedByCourseId(ctx context.Context, courseID uint) ([]domain.Module, error)
@@ -251,47 +116,17 @@ type Modules interface {
 	GetByLesson(ctx context.Context, lessonID uint) (domain.Module, error)
 }
 
-type AddLessonInput struct {
-	ModuleID uint
-	SchoolID uint
-	Name     string
-	Position uint
-}
-
-type UpdateLessonInput struct {
-	LessonID  uint
-	SchoolID  uint
-	Name      string
-	Content   string
-	Position  *uint
-	Published *bool
-}
-
 type Lessons interface {
-	Create(ctx context.Context, inp AddLessonInput) (uint, error)
+	Create(ctx context.Context, inp domain.AddLessonInput) (uint, error)
 	GetById(ctx context.Context, lessonID uint) (domain.Lesson, error)
-	Update(ctx context.Context, inp UpdateLessonInput) error
+	Update(ctx context.Context, inp domain.UpdateLessonInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	DeleteContent(ctx context.Context, schoolID uint, lessonIDs []uint) error
 }
 
-type CreatePackageInput struct {
-	CourseID uint
-	SchoolID uint
-	Name     string
-	Modules  []uint
-}
-
-type UpdatePackageInput struct {
-	ID       uint
-	SchoolID uint
-	Name     string
-	Modules  []uint
-}
-
 type Packages interface {
-	Create(ctx context.Context, inp CreatePackageInput) (uint, error)
-	Update(ctx context.Context, inp UpdatePackageInput) error
+	Create(ctx context.Context, inp domain.CreatePackageInput) (uint, error)
+	Update(ctx context.Context, inp domain.UpdatePackageInput) error
 	Delete(ctx context.Context, schoolID, id uint) error
 	GetByCourse(ctx context.Context, courseID uint) ([]domain.Package, error)
 	GetById(ctx context.Context, id uint) (domain.Package, error)
@@ -311,26 +146,141 @@ type Payments interface {
 	ProcessTransaction(ctx context.Context, callback interface{}) error
 }
 
-type CreateSurveyInput struct {
-	ModuleID uint
-	SchoolID uint
-	Survey   domain.Survey
-}
-
-type SaveStudentAnswersInput struct {
-	ModuleID  uint
-	StudentID uint
-	SchoolID  uint
-	Answers   []domain.SurveyAnswer
-}
-
 type Surveys interface {
-	Create(ctx context.Context, inp CreateSurveyInput) error
+	Create(ctx context.Context, inp domain.CreateSurveyInput) error
 	Delete(ctx context.Context, schoolID, moduleID uint) error
-	SaveStudentAnswers(ctx context.Context, inp SaveStudentAnswersInput) error
+	SaveStudentAnswers(ctx context.Context, inp domain.SaveStudentAnswersInput) error
 	GetResultsByModule(ctx context.Context, moduleID uint,
 		pagination *domain.PaginationQuery) ([]domain.SurveyResult, int64, error)
 	GetStudentResults(ctx context.Context, moduleID, studentID uint) (domain.SurveyResult, error)
+}
+
+// Repository interfaces for dependency inversion
+type SchoolsRepository interface {
+	Create(ctx context.Context, name string) (uint, error)
+	GetByDomain(ctx context.Context, domainName string) (domain.School, error)
+	GetById(ctx context.Context, id uint) (domain.School, error)
+	UpdateSettings(ctx context.Context, id uint, inp domain.UpdateSchoolSettingsInput) error
+	SetFondyCredentials(ctx context.Context, id uint, fondy domain.Fondy) error
+}
+
+type StudentsRepository interface {
+	Create(ctx context.Context, student *domain.Student) error
+	Update(ctx context.Context, inp domain.UpdateStudentInput) error
+	Delete(ctx context.Context, schoolID, studentID uint) error
+	GetByCredentials(ctx context.Context, schoolID uint, email, password string) (domain.Student, error)
+	GetByRefreshToken(ctx context.Context, schoolID uint, refreshToken string) (domain.Student, error)
+	GetById(ctx context.Context, schoolID, id uint) (domain.Student, error)
+	GetBySchool(ctx context.Context, schoolID uint, query domain.GetStudentsQuery) ([]domain.Student, int64, error)
+	SetSession(ctx context.Context, studentID uint, session domain.Session) error
+	GiveAccessToModule(ctx context.Context, studentID, moduleID uint) error
+	AttachOffer(ctx context.Context, studentID, offerID uint, moduleIDs []uint) error
+	DetachOffer(ctx context.Context, studentID, offerID uint, moduleIDs []uint) error
+	Verify(ctx context.Context, code string) (domain.Student, error)
+}
+
+type StudentLessonsRepository interface {
+	AddFinished(ctx context.Context, studentID, lessonID uint) error
+	SetLastOpened(ctx context.Context, studentID, lessonID uint) error
+}
+
+type CoursesRepository interface {
+	Create(ctx context.Context, schoolID uint, course domain.Course) (uint, error)
+	Update(ctx context.Context, inp domain.UpdateCourseInput) error
+	Delete(ctx context.Context, schoolID, courseID uint) error
+}
+
+type ModulesRepository interface {
+	Create(ctx context.Context, module domain.Module) (uint, error)
+	GetPublishedByCourseID(ctx context.Context, courseID uint) ([]domain.Module, error)
+	GetByCourseID(ctx context.Context, courseID uint) ([]domain.Module, error)
+	GetPublishedByID(ctx context.Context, moduleID uint) (domain.Module, error)
+	GetByID(ctx context.Context, moduleID uint) (domain.Module, error)
+	GetByPackages(ctx context.Context, packageIDs []uint) ([]domain.Module, error)
+	Update(ctx context.Context, inp domain.UpdateModuleInput) error
+	Delete(ctx context.Context, schoolID, id uint) error
+	DeleteByCourse(ctx context.Context, schoolID, courseID uint) error
+	AddLesson(ctx context.Context, schoolID, id uint, lesson domain.Lesson) error
+	GetByLesson(ctx context.Context, lessonID uint) (domain.Module, error)
+	UpdateLesson(ctx context.Context, inp domain.UpdateLessonInput) error
+	DeleteLesson(ctx context.Context, schoolID, id uint) error
+	DetachPackageFromAll(ctx context.Context, schoolID, packageID uint) error
+	AttachPackage(ctx context.Context, schoolID, packageID uint, modules []uint) error
+	AttachSurvey(ctx context.Context, schoolID, id uint, survey domain.Survey) error
+	DetachSurvey(ctx context.Context, schoolID, id uint) error
+}
+
+type LessonContentRepository interface {
+	GetByLessons(ctx context.Context, lessonIDs []uint) ([]domain.LessonContent, error)
+	GetByLesson(ctx context.Context, lessonID uint) (domain.LessonContent, error)
+	Update(ctx context.Context, schoolID, lessonID uint, content string) error
+	DeleteContent(ctx context.Context, schoolID uint, lessonIDs []uint) error
+}
+
+type PackagesRepository interface {
+	Create(ctx context.Context, pkg domain.Package) (uint, error)
+	Update(ctx context.Context, inp domain.UpdatePackageInput) error
+	Delete(ctx context.Context, schoolID, id uint) error
+	GetByCourse(ctx context.Context, courseID uint) ([]domain.Package, error)
+	GetByID(ctx context.Context, id uint) (domain.Package, error)
+	GetByIDs(ctx context.Context, ids []uint) ([]domain.Package, error)
+}
+
+type OffersRepository interface {
+	Create(ctx context.Context, offer domain.Offer) (uint, error)
+	Update(ctx context.Context, inp domain.UpdateOfferInput) error
+	Delete(ctx context.Context, schoolID, id uint) error
+	GetBySchool(ctx context.Context, schoolID uint) ([]domain.Offer, error)
+	GetByID(ctx context.Context, id uint) (domain.Offer, error)
+	GetByPackages(ctx context.Context, packageIDs []uint) ([]domain.Offer, error)
+	GetByIDs(ctx context.Context, ids []uint) ([]domain.Offer, error)
+}
+
+type PromoCodesRepository interface {
+	Create(ctx context.Context, promocode domain.PromoCode) (uint, error)
+	Update(ctx context.Context, inp domain.UpdatePromoCodeInput) error
+	Delete(ctx context.Context, schoolID, id uint) error
+	GetByCode(ctx context.Context, schoolID uint, code string) (domain.PromoCode, error)
+	GetByID(ctx context.Context, schoolID, id uint) (domain.PromoCode, error)
+	GetBySchool(ctx context.Context, schoolID uint) ([]domain.PromoCode, error)
+}
+
+type OrdersRepository interface {
+	Create(ctx context.Context, order domain.Order) error
+	AddTransaction(ctx context.Context, id uint, transaction domain.Transaction) (domain.Order, error)
+	GetBySchool(ctx context.Context, schoolID uint, pagination domain.GetOrdersQuery) ([]domain.Order, int64, error)
+	GetByID(ctx context.Context, id uint) (domain.Order, error)
+	SetStatus(ctx context.Context, id uint, status string) error
+}
+
+type AdminsRepository interface {
+	GetByCredentials(ctx context.Context, schoolID uint, email, password string) (domain.Admin, error)
+	GetByRefreshToken(ctx context.Context, schoolID uint, refreshToken string) (domain.Admin, error)
+	SetSession(ctx context.Context, id uint, session domain.Session) error
+	GetById(ctx context.Context, id uint) (domain.Admin, error)
+}
+
+type UsersRepository interface {
+	Create(ctx context.Context, user domain.User) error
+	GetByCredentials(ctx context.Context, email, password string) (domain.User, error)
+	GetByRefreshToken(ctx context.Context, refreshToken string) (domain.User, error)
+	Verify(ctx context.Context, userID uint, code string) error
+	SetSession(ctx context.Context, userID uint, session domain.Session) error
+	AttachSchool(ctx context.Context, userID, schoolID uint) error
+}
+
+type FilesRepository interface {
+	Create(ctx context.Context, file domain.File) (uint, error)
+	UpdateStatus(ctx context.Context, fileName string, status domain.FileStatus) error
+	GetForUploading(ctx context.Context) (domain.File, error)
+	UpdateStatusAndSetURL(ctx context.Context, id uint, url string) error
+	GetByID(ctx context.Context, id, schoolID uint) (domain.File, error)
+}
+
+type SurveyResultsRepository interface {
+	Save(ctx context.Context, results domain.SurveyResult) error
+	GetAllByModule(ctx context.Context, moduleID uint, pagination *domain.PaginationQuery) ([]domain.SurveyResult, int64, error)
+	GetByStudent(ctx context.Context, moduleID, studentID uint) (domain.SurveyResult, error)
 }
 
 type Services struct {
@@ -353,7 +303,20 @@ type Services struct {
 }
 
 type Deps struct {
-	Repos                  *repository.Repositories
+	SchoolsRepo            SchoolsRepository
+	StudentsRepo           StudentsRepository
+	StudentLessonsRepo     StudentLessonsRepository
+	CoursesRepo            CoursesRepository
+	ModulesRepo            ModulesRepository
+	LessonContentRepo      LessonContentRepository
+	PackagesRepo           PackagesRepository
+	OffersRepo             OffersRepository
+	PromoCodesRepo         PromoCodesRepository
+	OrdersRepo             OrdersRepository
+	AdminsRepo             AdminsRepository
+	UsersRepo              UsersRepository
+	FilesRepo              FilesRepository
+	SurveyResultsRepo      SurveyResultsRepository
 	Cache                  cache.Cache
 	Hasher                 hash.PasswordHasher
 	TokenManager           auth.TokenManager
@@ -371,19 +334,19 @@ type Deps struct {
 }
 
 func NewServices(deps Deps) *Services {
-	schoolsService := NewSchoolsService(deps.Repos.Schools, deps.Cache, deps.CacheTTL)
+	schoolsService := NewSchoolsService(deps.SchoolsRepo, deps.Cache, deps.CacheTTL)
 	emailsService := NewEmailsService(deps.EmailSender, deps.EmailConfig, *schoolsService, deps.Cache)
-	modulesService := NewModulesService(deps.Repos.Modules, deps.Repos.LessonContent)
-	coursesService := NewCoursesService(deps.Repos.Courses, modulesService)
-	packagesService := NewPackagesService(deps.Repos.Packages, deps.Repos.Modules)
-	offersService := NewOffersService(deps.Repos.Offers, modulesService, packagesService)
-	promoCodesService := NewPromoCodeService(deps.Repos.PromoCodes)
-	lessonsService := NewLessonsService(deps.Repos.Modules, deps.Repos.LessonContent)
-	studentLessonsService := NewStudentLessonsService(deps.Repos.StudentLessons)
-	studentsService := NewStudentsService(deps.Repos.Students, modulesService, offersService, lessonsService, deps.Hasher,
+	modulesService := NewModulesService(deps.ModulesRepo, deps.LessonContentRepo)
+	coursesService := NewCoursesService(deps.CoursesRepo, modulesService)
+	packagesService := NewPackagesService(deps.PackagesRepo, deps.ModulesRepo)
+	offersService := NewOffersService(deps.OffersRepo, modulesService, packagesService)
+	promoCodesService := NewPromoCodeService(deps.PromoCodesRepo)
+	lessonsService := NewLessonsService(deps.ModulesRepo, deps.LessonContentRepo)
+	studentLessonsService := NewStudentLessonsService(deps.StudentLessonsRepo)
+	studentsService := NewStudentsService(deps.StudentsRepo, modulesService, offersService, lessonsService, deps.Hasher,
 		deps.TokenManager, emailsService, studentLessonsService, deps.AccessTokenTTL, deps.RefreshTokenTTL, deps.OtpGenerator, deps.VerificationCodeLength)
-	ordersService := NewOrdersService(deps.Repos.Orders, offersService, promoCodesService, studentsService)
-	usersService := NewUsersService(deps.Repos.Users, deps.Hasher, deps.TokenManager, emailsService, schoolsService,
+	ordersService := NewOrdersService(deps.OrdersRepo, offersService, promoCodesService, studentsService)
+	usersService := NewUsersService(deps.UsersRepo, deps.Hasher, deps.TokenManager, emailsService, schoolsService,
 		deps.AccessTokenTTL, deps.RefreshTokenTTL, deps.OtpGenerator, deps.VerificationCodeLength, deps.Domain)
 
 	return &Services{
@@ -397,13 +360,13 @@ func NewServices(deps Deps) *Services {
 		Payments: NewPaymentsService(ordersService, offersService, studentsService, emailsService, schoolsService,
 			deps.FondyCallbackURL),
 		Orders: ordersService,
-		Admins: NewAdminsService(deps.Hasher, deps.TokenManager, deps.Repos.Admins, deps.Repos.Schools, deps.Repos.Students,
+		Admins: NewAdminsService(deps.Hasher, deps.TokenManager, deps.AdminsRepo, deps.SchoolsRepo, deps.StudentsRepo,
 			deps.AccessTokenTTL, deps.RefreshTokenTTL),
 		Packages: packagesService,
 		Lessons:  lessonsService,
-		Files:    NewFilesService(deps.Repos.Files, deps.StorageProvider, deps.Environment),
+		Files:    NewFilesService(deps.FilesRepo, deps.StorageProvider, deps.Environment),
 		Users:    usersService,
-		Surveys:  NewSurveysService(deps.Repos.Modules, deps.Repos.SurveyResults, deps.Repos.Students),
+		Surveys:  NewSurveysService(deps.ModulesRepo, deps.SurveyResultsRepo, deps.StudentsRepo),
 		Emails:   emailsService,
 	}
 }

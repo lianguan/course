@@ -5,15 +5,14 @@ import (
 	"time"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 )
 
 type CoursesService struct {
-	repo           repository.Courses
+	repo           CoursesRepository
 	modulesService Modules
 }
 
-func NewCoursesService(repo repository.Courses, modulesService Modules) *CoursesService {
+func NewCoursesService(repo CoursesRepository, modulesService Modules) *CoursesService {
 	return &CoursesService{repo: repo, modulesService: modulesService}
 }
 
@@ -25,18 +24,8 @@ func (s *CoursesService) Create(ctx context.Context, schoolID uint, name string)
 	})
 }
 
-func (s *CoursesService) Update(ctx context.Context, inp UpdateCourseInput) error {
-	updateInput := repository.UpdateCourseInput{
-		ID:          inp.CourseID,
-		SchoolID:    inp.SchoolID,
-		Name:        inp.Name,
-		ImageURL:    inp.ImageURL,
-		Description: inp.Description,
-		Color:       inp.Color,
-		Published:   inp.Published,
-	}
-
-	return s.repo.Update(ctx, updateInput)
+func (s *CoursesService) Update(ctx context.Context, inp domain.UpdateCourseInput) error {
+	return s.repo.Update(ctx, inp)
 }
 
 func (s *CoursesService) Delete(ctx context.Context, schoolID, courseID uint) error {

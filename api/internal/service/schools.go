@@ -4,17 +4,16 @@ import (
 	"context"
 
 	"ultrathreads/internal/domain"
-	"ultrathreads/internal/repository"
 	"ultrathreads/pkg/cache"
 )
 
 type SchoolsService struct {
-	repo  repository.Schools
+	repo  SchoolsRepository
 	cache cache.Cache
 	ttl   int64
 }
 
-func NewSchoolsService(repo repository.Schools, cache cache.Cache, ttl int64) *SchoolsService {
+func NewSchoolsService(repo SchoolsRepository, cache cache.Cache, ttl int64) *SchoolsService {
 	return &SchoolsService{repo: repo, cache: cache, ttl: ttl}
 }
 
@@ -45,7 +44,7 @@ func (s *SchoolsService) UpdateSettings(ctx context.Context, schoolID uint, inp 
 	return s.repo.UpdateSettings(ctx, schoolID, inp)
 }
 
-func (s *SchoolsService) ConnectFondy(ctx context.Context, input ConnectFondyInput) error {
+func (s *SchoolsService) ConnectFondy(ctx context.Context, input domain.ConnectFondyInput) error {
 	// TODO: implement fondy connection test
 	creds := domain.Fondy{
 		MerchantPassword: input.MerchantPassword,
@@ -56,7 +55,7 @@ func (s *SchoolsService) ConnectFondy(ctx context.Context, input ConnectFondyInp
 	return s.repo.SetFondyCredentials(ctx, input.SchoolID, creds)
 }
 
-func (s *SchoolsService) ConnectSendPulse(ctx context.Context, input ConnectSendPulseInput) error {
+func (s *SchoolsService) ConnectSendPulse(ctx context.Context, input domain.ConnectSendPulseInput) error {
 	// todo
 	return nil
 }
