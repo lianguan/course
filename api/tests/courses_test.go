@@ -38,7 +38,7 @@ type offerResponse struct {
 
 func (s *APITestSuite) TestGetAllCourses() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	req, _ := http.NewRequest("GET", "/api/v1/courses", nil)
@@ -64,7 +64,7 @@ func (s *APITestSuite) TestGetAllCourses() {
 
 func (s *APITestSuite) TestGetCourseById() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%d", school.Courses[0].ID), nil)
@@ -77,7 +77,7 @@ func (s *APITestSuite) TestGetCourseById() {
 
 	// Get Unpublished Course
 	router = gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r = s.Require()
 
 	req, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%d", school.Courses[1].ID), nil)
@@ -91,7 +91,7 @@ func (s *APITestSuite) TestGetCourseById() {
 
 func (s *APITestSuite) TestGetCourseOffers() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/courses/%d/offers", school.Courses[0].ID), nil)

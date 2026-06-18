@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"ultrathreads/pkg/database"
 	"ultrathreads/pkg/email/smtp"
 
 	"ultrathreads/pkg/storage"
@@ -18,17 +19,39 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
 	"ultrathreads/internal/config"
-	delivery "ultrathreads/internal/delivery/http"
+	"ultrathreads/internal/delivery"
 	"ultrathreads/internal/repository"
-	"ultrathreads/internal/server"
 	"ultrathreads/internal/service"
 	"ultrathreads/pkg/auth"
 	"ultrathreads/pkg/cache"
-	"ultrathreads/pkg/database/mysql"
 	"ultrathreads/pkg/hash"
 	"ultrathreads/pkg/logger"
 	"ultrathreads/pkg/otp"
 )
+
+type Server struct {
+	httpServer *http.Server
+}
+
+func newServer(cfg *config.Config, handler http.Handler) *Server {
+	return &Server{
+		httpServer: &http.Server{
+			Addr:           ":" + cfg.HTTP.Port,
+			Handler:        handler,
+			ReadTimeout:    cfg.HTTP.ReadTimeout,
+			WriteTimeout:   cfg.HTTP.WriteTimeout,
+			MaxHeaderBytes: cfg.HTTP.MaxHeaderMegabytes << 20,
+		},
+	}
+}
+
+func (s *Server) run() error {
+	return s.httpServer.ListenAndServe()
+}
+
+func (s *Server) stop(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
+}
 
 // @title UltraThreads API
 // @version 1.0
@@ -59,7 +82,7 @@ func Run(configPath string) {
 	}
 
 	// Dependencies
-	db, err := mysql.NewClient(cfg.MySQL.DSN)
+	db, err := database.NewClient(cfg.MySQL.DSN)
 	if err != nil {
 		logger.Error(err)
 
@@ -93,44 +116,44 @@ func Run(configPath string) {
 	// Services, Repos & API Handlers
 	repos := repository.NewRepositories(db)
 	services := service.NewServices(service.Deps{
-		SchoolsRepo:          repos.Schools,
-		StudentsRepo:         repos.Students,
-		StudentLessonsRepo:   repos.StudentLessons,
-		CoursesRepo:          repos.Courses,
-		ModulesRepo:          repos.Modules,
-		LessonContentRepo:    repos.LessonContent,
-		PackagesRepo:         repos.Packages,
-		OffersRepo:           repos.Offers,
-		PromoCodesRepo:       repos.PromoCodes,
-		OrdersRepo:           repos.Orders,
-		AdminsRepo:           repos.Admins,
-		UsersRepo:            repos.Users,
-		FilesRepo:            repos.Files,
-		SurveyResultsRepo:    repos.SurveyResults,
-		Cache:                memCache,
-		Hasher:               hasher,
-		TokenManager:         tokenManager,
-		EmailSender:          emailSender,
-		EmailConfig:          cfg.Email,
-		AccessTokenTTL:       cfg.Auth.JWT.AccessTokenTTL,
-		RefreshTokenTTL:      cfg.Auth.JWT.RefreshTokenTTL,
-		FondyCallbackURL:     cfg.Payment.FondyCallbackURL,
-		CacheTTL:             int64(cfg.CacheTTL.Seconds()),
-		OtpGenerator:         otpGenerator,
+		SchoolsRepo:            repos.Schools,
+		StudentsRepo:           repos.Students,
+		StudentLessonsRepo:     repos.StudentLessons,
+		CoursesRepo:            repos.Courses,
+		ModulesRepo:            repos.Modules,
+		LessonContentRepo:      repos.LessonContent,
+		PackagesRepo:           repos.Packages,
+		OffersRepo:             repos.Offers,
+		PromoCodesRepo:         repos.PromoCodes,
+		OrdersRepo:             repos.Orders,
+		AdminsRepo:             repos.Admins,
+		UsersRepo:              repos.Users,
+		FilesRepo:              repos.Files,
+		SurveyResultsRepo:      repos.SurveyResults,
+		Cache:                  memCache,
+		Hasher:                 hasher,
+		TokenManager:           tokenManager,
+		EmailSender:            emailSender,
+		EmailConfig:            cfg.Email,
+		AccessTokenTTL:         cfg.Auth.JWT.AccessTokenTTL,
+		RefreshTokenTTL:        cfg.Auth.JWT.RefreshTokenTTL,
+		FondyCallbackURL:       cfg.Payment.FondyCallbackURL,
+		CacheTTL:               int64(cfg.CacheTTL.Seconds()),
+		OtpGenerator:           otpGenerator,
 		VerificationCodeLength: cfg.Auth.VerificationCodeLength,
-		StorageProvider:      storageProvider,
-		Environment:          cfg.Environment,
-		Domain:               cfg.HTTP.Host,
+		StorageProvider:        storageProvider,
+		Environment:            cfg.Environment,
+		Domain:                 cfg.HTTP.Host,
 	})
 	handlers := delivery.NewHandler(services, tokenManager)
 
 	services.Files.InitStorageUploaderWorkers(context.Background())
 
 	// HTTP Server
-	srv := server.NewServer(cfg, handlers.Init(cfg))
+	srv := newServer(cfg, handlers.Init(cfg))
 
 	go func() {
-		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {
+		if err := srv.run(); !errors.Is(err, http.ErrServerClosed) {
 			logger.Errorf("error occurred while running http server: %s\n", err.Error())
 		}
 	}()
@@ -148,7 +171,7 @@ func Run(configPath string) {
 	ctx, shutdown := context.WithTimeout(context.Background(), timeout)
 	defer shutdown()
 
-	if err := srv.Stop(ctx); err != nil {
+	if err := srv.stop(ctx); err != nil {
 		logger.Errorf("failed to stop server: %v", err)
 	}
 

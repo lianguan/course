@@ -17,7 +17,7 @@ import (
 
 func (s *APITestSuite) TestFondyCallbackApproved() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -89,7 +89,7 @@ func (s *APITestSuite) TestFondyCallbackApproved() {
 
 func (s *APITestSuite) TestFondyCallbackDeclined() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data

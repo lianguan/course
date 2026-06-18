@@ -5,17 +5,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
 	"ultrathreads/internal/config"
-	v1 "ultrathreads/internal/delivery/http/v1"
+	"ultrathreads/internal/delivery"
 	"ultrathreads/internal/repository"
 	"ultrathreads/internal/service"
 	"ultrathreads/pkg/auth"
 	"ultrathreads/pkg/cache"
-	"ultrathreads/pkg/database/mysql"
+	"ultrathreads/pkg/database"
 	emailmock "ultrathreads/pkg/email/mock"
 	"ultrathreads/pkg/hash"
 	"ultrathreads/pkg/otp"
+
+	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +30,7 @@ type APITestSuite struct {
 	suite.Suite
 
 	db       *gorm.DB
-	handler  *v1.Handler
+	handler  *delivery.Handler
 	services *service.Services
 	repos    *repository.Repositories
 
@@ -52,7 +53,7 @@ func TestAPISuite(t *testing.T) {
 }
 
 func (s *APITestSuite) SetupSuite() {
-	db, err := mysql.NewClient(dbURI)
+	db, err := database.NewClient(dbURI)
 	if err != nil {
 		s.FailNow("Failed to connect to MySQL", err)
 	}
@@ -83,24 +84,24 @@ func (s *APITestSuite) initDeps() {
 	}
 
 	services := service.NewServices(service.Deps{
-		SchoolsRepo:          repos.Schools,
-		StudentsRepo:         repos.Students,
-		StudentLessonsRepo:   repos.StudentLessons,
-		CoursesRepo:          repos.Courses,
-		ModulesRepo:          repos.Modules,
-		LessonContentRepo:    repos.LessonContent,
-		PackagesRepo:         repos.Packages,
-		OffersRepo:           repos.Offers,
-		PromoCodesRepo:       repos.PromoCodes,
-		OrdersRepo:           repos.Orders,
-		AdminsRepo:           repos.Admins,
-		UsersRepo:            repos.Users,
-		FilesRepo:            repos.Files,
-		SurveyResultsRepo:    repos.SurveyResults,
-		Cache:                memCache,
-		Hasher:               hasher,
-		TokenManager:         tokenManager,
-		EmailSender:          s.mocks.emailSender,
+		SchoolsRepo:        repos.Schools,
+		StudentsRepo:       repos.Students,
+		StudentLessonsRepo: repos.StudentLessons,
+		CoursesRepo:        repos.Courses,
+		ModulesRepo:        repos.Modules,
+		LessonContentRepo:  repos.LessonContent,
+		PackagesRepo:       repos.Packages,
+		OffersRepo:         repos.Offers,
+		PromoCodesRepo:     repos.PromoCodes,
+		OrdersRepo:         repos.Orders,
+		AdminsRepo:         repos.Admins,
+		UsersRepo:          repos.Users,
+		FilesRepo:          repos.Files,
+		SurveyResultsRepo:  repos.SurveyResults,
+		Cache:              memCache,
+		Hasher:             hasher,
+		TokenManager:       tokenManager,
+		EmailSender:        s.mocks.emailSender,
 		EmailConfig: config.EmailConfig{
 			Templates: config.EmailTemplates{
 				Verification:       "../templates/verification_email.html",
@@ -120,7 +121,7 @@ func (s *APITestSuite) initDeps() {
 
 	s.repos = repos
 	s.services = services
-	s.handler = v1.NewHandler(services, tokenManager)
+	s.handler = delivery.NewHandler(services, tokenManager)
 	s.hasher = hasher
 	s.tokenManager = tokenManager
 }

@@ -20,7 +20,7 @@ const (
 
 func (s *APITestSuite) TestStudentSignUp() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 
 	r := s.Require()
 
@@ -60,7 +60,7 @@ func (s *APITestSuite) TestStudentSignUp() {
 
 func (s *APITestSuite) TestStudentSignInNotVerified() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -86,7 +86,7 @@ func (s *APITestSuite) TestStudentSignInNotVerified() {
 
 func (s *APITestSuite) TestStudentVerify() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -119,7 +119,7 @@ func (s *APITestSuite) TestStudentVerify() {
 
 func (s *APITestSuite) TestStudentSignInVerified() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -148,7 +148,7 @@ func (s *APITestSuite) TestStudentSignInVerified() {
 
 func (s *APITestSuite) TestStudentGetPaidLessonsWithoutPurchase() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -180,7 +180,7 @@ func (s *APITestSuite) TestStudentGetPaidLessonsWithoutPurchase() {
 
 func (s *APITestSuite) TestStudentGetModuleOffers() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -228,7 +228,7 @@ func (s *APITestSuite) TestStudentGetModuleOffers() {
 
 func (s *APITestSuite) TestStudentCreateOrderWithoutPromocode() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -269,7 +269,7 @@ func (s *APITestSuite) TestStudentCreateOrderWithoutPromocode() {
 
 func (s *APITestSuite) TestStudentCreateOrderWrongOffer() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -303,7 +303,7 @@ func (s *APITestSuite) TestStudentCreateOrderWrongOffer() {
 
 func (s *APITestSuite) TestStudentCreateOrderWithPromocode() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -349,7 +349,7 @@ func (s *APITestSuite) TestStudentCreateOrderWithPromocode() {
 
 func (s *APITestSuite) TestStudentCreateOrderWrongPromo() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data

@@ -13,7 +13,7 @@ import (
 
 func (s *APITestSuite) TestAdminCreateCourse() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	// populate DB data
@@ -50,7 +50,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 func (s *APITestSuite) TestAdminGetAllCourses() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	var id uint = 101
@@ -82,7 +82,7 @@ func (s *APITestSuite) TestAdminGetAllCourses() {
 
 func (s *APITestSuite) TestAdminGetCourseByID() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	var id uint = 102

@@ -11,7 +11,7 @@ import (
 
 func (s *APITestSuite) TestGetPromoCode() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/v1/promocodes/%s", promocodes[0].(domain.PromoCode).Code), nil)
@@ -25,7 +25,7 @@ func (s *APITestSuite) TestGetPromoCode() {
 
 func (s *APITestSuite) TestGetPromoCodeInvalid() {
 	router := gin.New()
-	s.handler.Init(router.Group("/api"))
+	s.handler.InitRoutes(router.Group("/api"))
 	r := s.Require()
 
 	req, _ := http.NewRequest("GET", "/api/v1/promocodes/CODE123", nil)
