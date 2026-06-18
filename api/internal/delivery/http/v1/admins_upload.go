@@ -140,7 +140,7 @@ func (h *Handler) adminUploadImage(c *gin.Context) { //nolint:funlen
 
 	f, err := os.OpenFile(tempFilename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to create temp file")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -148,7 +148,7 @@ func (h *Handler) adminUploadImage(c *gin.Context) { //nolint:funlen
 	defer f.Close()
 
 	if _, err := io.Copy(f, bytes.NewReader(buffer)); err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to write chunk to temp file")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -240,7 +240,7 @@ func (h *Handler) adminUploadVideo(c *gin.Context) { //nolint:funlen
 
 	f, err := os.OpenFile(tempFilename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to create temp file")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -256,7 +256,7 @@ func (h *Handler) adminUploadVideo(c *gin.Context) { //nolint:funlen
 			logger.Errorf("failed to delete corrupted temp file: %s", err.Error())
 		}
 
-		newResponse(c, http.StatusInternalServerError, "failed to write chunk to temp file")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -272,7 +272,7 @@ func (h *Handler) adminUploadVideo(c *gin.Context) { //nolint:funlen
 			SchoolID:        school.ID,
 		})
 		if err != nil {
-			newResponse(c, http.StatusInternalServerError, "failed to save file info to DB")
+			newResponse(c, http.StatusInternalServerError, err.Error())
 
 			return
 		}
@@ -284,7 +284,7 @@ func (h *Handler) adminUploadVideo(c *gin.Context) { //nolint:funlen
 
 	if rangeInfo.isUploadCompleted() {
 		if err := h.services.Files.UpdateStatus(c.Request.Context(), tempFilename, domain.UploadedByClient); err != nil {
-			newResponse(c, http.StatusInternalServerError, "failed to update file status")
+			newResponse(c, http.StatusInternalServerError, err.Error())
 
 			return
 		}
@@ -339,7 +339,7 @@ func (h *Handler) adminUploadFile(c *gin.Context) { //nolint:funlen
 
 	f, err := os.OpenFile(tempFilename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to create temp file")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -347,7 +347,7 @@ func (h *Handler) adminUploadFile(c *gin.Context) { //nolint:funlen
 	defer f.Close()
 
 	if _, err := io.Copy(f, bytes.NewReader(buffer)); err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to write chunk to temp file")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}

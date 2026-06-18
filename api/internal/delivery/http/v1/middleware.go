@@ -69,6 +69,7 @@ func (h *Handler) studentIdentity(c *gin.Context) {
 	id, err := h.parseAuthHeader(c)
 	if err != nil {
 		newResponse(c, http.StatusUnauthorized, err.Error())
+		return
 	}
 
 	c.Set(studentCtx, id)
@@ -78,6 +79,7 @@ func (h *Handler) adminIdentity(c *gin.Context) {
 	id, err := h.parseAuthHeader(c)
 	if err != nil {
 		newResponse(c, http.StatusUnauthorized, err.Error())
+		return
 	}
 
 	c.Set(adminCtx, id)
@@ -87,6 +89,7 @@ func (h *Handler) userIdentity(c *gin.Context) {
 	id, err := h.parseAuthHeader(c)
 	if err != nil {
 		newResponse(c, http.StatusUnauthorized, err.Error())
+		return
 	}
 
 	c.Set(userCtx, id)

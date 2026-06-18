@@ -19,6 +19,11 @@ type response struct {
 }
 
 func newResponse(c *gin.Context, statusCode int, message string) {
-	logger.Error(message)
+	// 区分客户端错误(4xx)和服务端错误(5xx)的日志级别
+	if statusCode >= 500 {
+		logger.Error(message)
+	} else {
+		logger.Warn(message)
+	}
 	c.AbortWithStatusJSON(statusCode, response{message})
 }

@@ -3,9 +3,10 @@ package v1
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"ultrathreads/internal/domain"
 	"ultrathreads/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 // @Summary Admin Get Survey
@@ -31,7 +32,7 @@ func (h *Handler) adminGetSurvey(c *gin.Context) {
 
 	module, err := h.services.Modules.GetById(c.Request.Context(), id)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to get module")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -96,7 +97,7 @@ func (h *Handler) adminCreateOrUpdateSurvey(c *gin.Context) {
 			Questions: toQuestions(inp.Questions),
 		},
 	}); err != nil {
-		newResponse(c, http.StatusInternalServerError, "invalid input body")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -133,7 +134,7 @@ func (h *Handler) adminDeleteSurvey(c *gin.Context) {
 	}
 
 	if err := h.services.Surveys.Delete(c.Request.Context(), school.ID, id); err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to delete survey")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -173,7 +174,7 @@ func (h *Handler) adminGetSurveyResults(c *gin.Context) {
 
 	results, count, err := h.services.Surveys.GetResultsByModule(c.Request.Context(), id, &query)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to delete survey")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -215,7 +216,7 @@ func (h *Handler) adminGetSurveyStudentResults(c *gin.Context) {
 
 	results, err := h.services.Surveys.GetStudentResults(c.Request.Context(), moduleId, studentId)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "failed to delete survey")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
