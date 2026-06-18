@@ -495,7 +495,7 @@ func (h *Handler) adminCreateModule(c *gin.Context) {
 		Position: inp.Position,
 	})
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "invalid id param")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -922,7 +922,7 @@ func (h *Handler) adminGetAllPackages(c *gin.Context) {
 
 	pkg, err := h.services.Packages.GetByCourse(c.Request.Context(), id)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "invalid id param")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -953,7 +953,7 @@ func (h *Handler) adminGetPackageById(c *gin.Context) {
 
 	pkg, err := h.services.Packages.GetById(c.Request.Context(), id)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "invalid id param")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
@@ -1050,7 +1050,7 @@ func (h *Handler) adminDeletePackage(c *gin.Context) {
 
 	err = h.services.Packages.Delete(c.Request.Context(), school.ID, id)
 	if err != nil {
-		newResponse(c, http.StatusInternalServerError, "invalid id param")
+		newResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}

@@ -444,6 +444,10 @@ func TestHandler_adminUpdatePromocode(t *testing.T) {
 			name:         "invalid input body",
 			body:         `{wrong}`,
 			school:       school,
+			input: domain.UpdatePromoCodeInput{
+				ID:       1,
+				SchoolID: school.ID,
+			},
 			mockBehavior: func(r *mock_service.MockPromoCodes, input domain.UpdatePromoCodeInput) {},
 			statusCode:   400,
 			responseBody: `{"message":"invalid input body"}`,
