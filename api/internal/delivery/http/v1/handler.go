@@ -4,9 +4,10 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"ultrathreads/internal/service"
 	"ultrathreads/pkg/auth"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
